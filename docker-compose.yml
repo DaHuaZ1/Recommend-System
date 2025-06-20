@@ -1,0 +1,35 @@
+# version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: cake-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: wang159357
+      MYSQL_DATABASE: capstone_project
+    ports:
+      - "3305:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    build: ./backend
+    container_name: cake-backend
+    restart: always
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: wang159357
+      MYSQL_DB: capstone_project
+      SECRET_KEY: your-secret-key
+      TEACHER_SECRET_KEY: teacher-secret-key-2024
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mysql
+    working_dir: /app
+
+volumes:
+  mysql_data: 

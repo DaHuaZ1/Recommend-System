@@ -19,7 +19,7 @@ class Config:
     MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
     
     # MySQL密码，需要在环境变量中设置
-    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', 'password')
+    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', 'wang159357')
     
     # 数据库名称，默认capstone_project
     MYSQL_DB = os.environ.get('MYSQL_DB', 'capstone_project')
