@@ -4,207 +4,68 @@ from utils.jwt_utils import generate_token, token_required, teacher_required, st
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/register/student', methods=['POST'])
-def register_student():
+@auth_bp.route('/register', methods=['POST'])
+def register():
     """
-    学生注册API端点
-    
-    请求方法: POST
-    请求路径: /auth/register/student
+    统一注册API端点
     请求体: JSON格式
         {
-            "email": "student@example.com",
-            "username": "student_name", 
-            "password": "password123"
+            "email": "user@example.com",
+            "username": "user_name",
+            "password": "password123",
+            "user_type": "student" 或 "teacher",
+            "secret_key": "teacher-secret-key-2024"  # 仅教师需要
         }
-    
-    返回:
-        成功: {"message": "注册成功"}, 状态码 201
-        失败: {"error": "错误信息"}, 状态码 400
     """
     try:
         data = request.get_json()
-        
-        # 验证必需字段
-        required_fields = ['email', 'username', 'password']
+        required_fields = ['email', 'username', 'password', 'user_type']
         for field in required_fields:
             if not data.get(field):
-                return jsonify({'error': f'缺少必需字段: {field}'}), 400
-        
+                return jsonify({'message': f'缺少必需字段: {field}', 'status': 'fail'}), 400
         email = data.get('email')
         username = data.get('username')
         password = data.get('password')
-        
-        # 调用服务层处理注册逻辑
-        success, message = AuthService.register_student(email, username, password)
-        
+        user_type = data.get('user_type')
+        secret_key = data.get('secret_key')
+        success, message = AuthService.register_user(email, username, password, user_type, secret_key)
         if success:
-            return jsonify({'message': message}), 201
+            return jsonify({'message': message, 'status': 'success'}), 200
         else:
-            return jsonify({'error': message}), 400
-            
+            return jsonify({'message': message, 'status': 'fail'}), 400
     except Exception as e:
-        return jsonify({'error': f'注册失败: {str(e)}'}), 500
+        return jsonify({'message': f'注册失败: {str(e)}', 'status': 'fail'}), 500
 
-@auth_bp.route('/register/teacher', methods=['POST'])
-def register_teacher():
+@auth_bp.route('/login', methods=['POST'])
+def login():
     """
-    教师注册API端点
-    
-    请求方法: POST
-    请求路径: /auth/register/teacher
+    统一登录API端点
     请求体: JSON格式
         {
-            "email": "teacher@example.com",
-            "username": "teacher_name",
+            "email": "user@example.com",
             "password": "password123",
-            "teacher_secret_key": "teacher-secret-key-2024"
+            "user_type": "student" 或 "teacher",
+            "secret_key": "teacher-secret-key-2024"  # 仅教师需要
         }
-    
-    返回:
-        成功: {"message": "教师注册成功"}, 状态码 201
-        失败: {"error": "错误信息"}, 状态码 400
     """
     try:
         data = request.get_json()
-        
-        # 验证必需字段
-        required_fields = ['email', 'username', 'password', 'teacher_secret_key']
+        required_fields = ['email', 'password', 'user_type']
         for field in required_fields:
             if not data.get(field):
-                return jsonify({'error': f'缺少必需字段: {field}'}), 400
-        
-        email = data.get('email')
-        username = data.get('username')
-        password = data.get('password')
-        teacher_secret_key = data.get('teacher_secret_key')
-        
-        # 调用服务层处理注册逻辑
-        success, message = AuthService.register_teacher(email, username, password, teacher_secret_key)
-        
-        if success:
-            return jsonify({'message': message}), 201
-        else:
-            return jsonify({'error': message}), 400
-            
-    except Exception as e:
-        return jsonify({'error': f'注册失败: {str(e)}'}), 500
-
-@auth_bp.route('/login/student', methods=['POST'])
-def login_student():
-    """
-    学生登录API端点
-    
-    请求方法: POST
-    请求路径: /auth/login/student
-    请求体: JSON格式
-        {
-            "email": "student@example.com",
-            "password": "password123"
-        }
-    
-    返回:
-        成功: {
-            "message": "登录成功",
-            "token": "jwt_token_here",
-            "user": {
-                "id": 1,
-                "email": "student@example.com",
-                "username": "student_name",
-                "role": "student"
-            }
-        }, 状态码 200
-        失败: {"error": "错误信息"}, 状态码 401
-    """
-    try:
-        data = request.get_json()
-        
-        # 验证必需字段
-        required_fields = ['email', 'password']
-        for field in required_fields:
-            if not data.get(field):
-                return jsonify({'error': f'缺少必需字段: {field}'}), 400
-        
+                return jsonify({'message': f'缺少必需字段: {field}', 'status': 'fail'}), 400
         email = data.get('email')
         password = data.get('password')
-        
-        # 调用服务层处理登录逻辑
-        success, result = AuthService.login_student(email, password)
-        
+        user_type = data.get('user_type')
+        secret_key = data.get('secret_key')
+        success, result = AuthService.login_user(email, password, user_type, secret_key)
         if success:
-            user = result
-            # 生成JWT token
-            token = generate_token(user.id, user.role)
-            
-            return jsonify({
-                'message': '登录成功',
-                'token': token,
-                'user': user.to_dict()
-            }), 200
+            token, user_type = result
+            return jsonify({'token': token, 'user_type': user_type}), 200
         else:
-            return jsonify({'error': result}), 401
-            
+            return jsonify({'message': result, 'status': 'fail'}), 401
     except Exception as e:
-        return jsonify({'error': f'登录失败: {str(e)}'}), 500
-
-@auth_bp.route('/login/teacher', methods=['POST'])
-def login_teacher():
-    """
-    教师登录API端点
-    
-    请求方法: POST
-    请求路径: /auth/login/teacher
-    请求体: JSON格式
-        {
-            "email": "teacher@example.com",
-            "password": "password123",
-            "teacher_secret_key": "teacher-secret-key-2024"
-        }
-    
-    返回:
-        成功: {
-            "message": "登录成功",
-            "token": "jwt_token_here",
-            "user": {
-                "id": 1,
-                "email": "teacher@example.com",
-                "username": "teacher_name",
-                "role": "teacher"
-            }
-        }, 状态码 200
-        失败: {"error": "错误信息"}, 状态码 401
-    """
-    try:
-        data = request.get_json()
-        
-        # 验证必需字段
-        required_fields = ['email', 'password', 'teacher_secret_key']
-        for field in required_fields:
-            if not data.get(field):
-                return jsonify({'error': f'缺少必需字段: {field}'}), 400
-        
-        email = data.get('email')
-        password = data.get('password')
-        teacher_secret_key = data.get('teacher_secret_key')
-        
-        # 调用服务层处理登录逻辑
-        success, result = AuthService.login_teacher(email, password, teacher_secret_key)
-        
-        if success:
-            user = result
-            # 生成JWT token
-            token = generate_token(user.id, user.role)
-            
-            return jsonify({
-                'message': '登录成功',
-                'token': token,
-                'user': user.to_dict()
-            }), 200
-        else:
-            return jsonify({'error': result}), 401
-            
-    except Exception as e:
-        return jsonify({'error': f'登录失败: {str(e)}'}), 500
+        return jsonify({'message': f'登录失败: {str(e)}', 'status': 'fail'}), 500
 
 @auth_bp.route('/profile', methods=['GET'])
 @token_required

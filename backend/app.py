@@ -6,6 +6,7 @@ from config import Config  # 导入配置文件
 from models.user import db  # 导入数据库实例
 from auth.controller import auth_bp  # 导入认证模块的蓝图
 
+
 def create_app():
     """
     应用工厂函数 - 创建并配置Flask应用
@@ -16,26 +17,26 @@ def create_app():
     """
     # 创建Flask应用实例
     app = Flask(__name__)
-    
+
     # 从Config类加载所有配置
     # 包括数据库连接、JWT密钥、教师秘钥等
     app.config.from_object(Config)
-    
+
     # 初始化Flask扩展
     CORS(app)  # 启用跨域支持，允许前端访问后端API
     db.init_app(app)  # 初始化数据库连接
-    
+
     # 注册蓝图 - 将认证模块的路由注册到主应用
-    # url_prefix='/auth' 表示所有认证相关路由都以 /auth 开头
-    # 例如：/auth/register/student, /auth/login/teacher 等
-    app.register_blueprint(auth_bp, url_prefix='/auth')
-    
+    # url_prefix='/api' 表示所有认证相关路由都以 /api 开头
+    app.register_blueprint(auth_bp, url_prefix='/api')
+
     # 在应用上下文中创建数据库表
     # 如果表不存在，会自动创建
     with app.app_context():
         db.create_all()
-    
+
     return app
+
 
 # 创建应用实例
 app = create_app()

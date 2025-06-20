@@ -43,4 +43,4 @@ class Config:
     # ==================== 教师秘钥配置 ====================
     # 教师注册和登录的统一秘钥
     # 所有教师都使用这个秘钥进行身份验证
-    TEACHER_SECRET_KEY = os.environ.get('TEACHER_SECRET_KEY', 'teacher-secret-key-2024')
+    TEACHER_SECRET_KEY = os.environ.get('TEACHER_SECRET_KEY', 'teacher-secret-key-2025')
