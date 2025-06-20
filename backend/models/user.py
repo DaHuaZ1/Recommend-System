@@ -25,9 +25,8 @@ class User(db.Model):
     # 用于登录和身份识别
     email = db.Column(db.String(120), unique=True, nullable=False)
     
-    # 用户名，不能为空
-    # 用于显示和识别用户
-    username = db.Column(db.String(80), nullable=False)
+    # 用户名，允许为空
+    username = db.Column(db.String(80), nullable=True)
     
     # 密码哈希值，不能为空
     # 存储的是加密后的密码，不是明文密码

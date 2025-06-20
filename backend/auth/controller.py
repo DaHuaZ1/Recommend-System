@@ -20,13 +20,9 @@ def register():
           properties:
             email:
               type: string
-            username:
-              type: string
             password:
               type: string
             user_type:
-              type: string
-            secret_key:
               type: string
     responses:
       200:
@@ -43,16 +39,14 @@ def register():
     """
     try:
         data = request.get_json()
-        required_fields = ['email', 'username', 'password', 'user_type']
+        required_fields = ['email', 'password', 'user_type']
         for field in required_fields:
             if not data.get(field):
                 return jsonify({'message': f'缺少必需字段: {field}', 'status': 'fail'}), 400
         email = data.get('email')
-        username = data.get('username')
         password = data.get('password')
         user_type = data.get('user_type')
-        secret_key = data.get('secret_key')
-        success, message = AuthService.register_user(email, username, password, user_type, secret_key)
+        success, message = AuthService.register_user(email, password, user_type)
         if success:
             return jsonify({'message': message, 'status': 'success'}), 200
         else:
@@ -82,6 +76,7 @@ def login():
               type: string
             secret_key:
               type: string
+              description: "仅教师登录时需要"
     responses:
       200:
         description: 登录成功
@@ -92,6 +87,15 @@ def login():
               type: string
             user_type:
               type: string
+            user:
+              type: object
+              properties:
+                id:
+                  type: integer
+                email:
+                  type: string
+                username:
+                  type: string
       400:
         description: 参数错误
       401:
@@ -109,8 +113,8 @@ def login():
         secret_key = data.get('secret_key')
         success, result = AuthService.login_user(email, password, user_type, secret_key)
         if success:
-            token, user_type = result
-            return jsonify({'token': token, 'user_type': user_type}), 200
+            token, user_type, user = result
+            return jsonify({'token': token, 'user_type': user_type, 'user': user}), 200
         else:
             return jsonify({'message': result, 'status': 'fail'}), 401
     except Exception as e:

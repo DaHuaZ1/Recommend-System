@@ -44,28 +44,22 @@ class AuthService:
         return True, "密码格式正确"
     
     @staticmethod
-    def register_user(email, username, password, user_type, secret_key=None):
-        # 校验邮箱
+    def register_user(email, password, user_type):
         if not AuthService.validate_email(email):
             return False, "邮箱格式不正确"
-        # 校验密码
         is_valid, message = AuthService.validate_password(password)
         if not is_valid:
             return False, message
-        # 检查邮箱是否已注册
         if User.query.filter_by(email=email).first():
             return False, "邮箱已被注册"
-        # 判断用户类型
         if user_type == 'teacher':
-            if not secret_key or secret_key != Config.TEACHER_SECRET_KEY:
-                return False, "教师注册需要正确的 secret_key"
             role = 'teacher'
         elif user_type == 'student':
             role = 'student'
         else:
             return False, "user_type 只能为 student 或 teacher"
         try:
-            user = User(email=email, username=username, password=password, role=role)
+            user = User(email=email, username=None, password=password, role=role)
             db.session.add(user)
             db.session.commit()
             return True, "注册成功"
@@ -84,7 +78,7 @@ class AuthService:
             if not user.check_password(password):
                 return False, "密码错误"
             token = generate_token(user.id, user.role)
-            return True, (token, 'teacher')
+            return True, (token, 'teacher', user.to_dict())
         elif user_type == 'student':
             user = User.query.filter_by(email=email, role='student').first()
             if not user:
@@ -92,7 +86,7 @@ class AuthService:
             if not user.check_password(password):
                 return False, "密码错误"
             token = generate_token(user.id, user.role)
-            return True, (token, 'student')
+            return True, (token, 'student', user.to_dict())
         else:
             return False, "user_type 只能为 student 或 teacher"
     
