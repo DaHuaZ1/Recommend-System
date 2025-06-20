@@ -5,6 +5,7 @@ from flask_cors import CORS  # 处理跨域请求
 from config import Config  # 导入配置文件
 from models.user import db  # 导入数据库实例
 from auth.controller import auth_bp  # 导入认证模块的蓝图
+from flasgger import Swagger  # 新增
 
 
 def create_app():
@@ -25,6 +26,7 @@ def create_app():
     # 初始化Flask扩展
     CORS(app)  # 启用跨域支持，允许前端访问后端API
     db.init_app(app)  # 初始化数据库连接
+    Swagger(app)  # 新增，初始化 Swagger UI
 
     # 注册蓝图 - 将认证模块的路由注册到主应用
     # url_prefix='/api' 表示所有认证相关路由都以 /api 开头

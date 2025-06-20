@@ -7,15 +7,39 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/register', methods=['POST'])
 def register():
     """
-    统一注册API端点
-    请求体: JSON格式
-        {
-            "email": "user@example.com",
-            "username": "user_name",
-            "password": "password123",
-            "user_type": "student" 或 "teacher",
-            "secret_key": "teacher-secret-key-2024"  # 仅教师需要
-        }
+    用户注册接口
+    ---
+    tags:
+      - 用户认证
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+            username:
+              type: string
+            password:
+              type: string
+            user_type:
+              type: string
+            secret_key:
+              type: string
+    responses:
+      200:
+        description: 注册成功
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+            status:
+              type: string
+      400:
+        description: 参数错误
     """
     try:
         data = request.get_json()
@@ -39,14 +63,39 @@ def register():
 @auth_bp.route('/login', methods=['POST'])
 def login():
     """
-    统一登录API端点
-    请求体: JSON格式
-        {
-            "email": "user@example.com",
-            "password": "password123",
-            "user_type": "student" 或 "teacher",
-            "secret_key": "teacher-secret-key-2024"  # 仅教师需要
-        }
+    用户登录接口
+    ---
+    tags:
+      - 用户认证
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+            password:
+              type: string
+            user_type:
+              type: string
+            secret_key:
+              type: string
+    responses:
+      200:
+        description: 登录成功
+        schema:
+          type: object
+          properties:
+            token:
+              type: string
+            user_type:
+              type: string
+      400:
+        description: 参数错误
+      401:
+        description: 登录失败
     """
     try:
         data = request.get_json()
