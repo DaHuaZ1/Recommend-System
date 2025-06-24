@@ -20,6 +20,8 @@ import AUTH from "../Constant";
 import CanvasCaptcha from './CanvasCaptcha';
 import backendURL from '../backendURL'; // Import backend URL
 
+import logo from '../assets/unsw_0.png'; // Import logo image
+
 const Signup = (props) => {
   // Form fields
   const [email, setEmail] = useState("");
@@ -110,11 +112,37 @@ const Signup = (props) => {
     <Container maxWidth="sm" sx={{
       height: '100vh',
       display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       px: 2,
       py: 4,
+      gap: 3
     }}>
+      {/* Icon */}
+      <Box sx={{ mb: 1 }}>
+        <img
+          src={logo}
+          alt="Logo"
+          style={{ width: '110px', height: '50px' }}
+        />
+      </Box>
+      {/* Title */}
+      <Typography
+        component="h1"
+        sx={{
+            fontSize: '28px',
+            lineHeight: 1.25,
+            fontWeight: 300,
+            letterSpacing: '-0.02em',
+            fontFamily: `-apple-system, BlinkMacSystemFont, "Segoe UI",
+                        Roboto, "Helvetica Neue", Arial, sans-serif`,
+            color: '#4b4b4b',
+        }}
+        >
+        Sign up to PoJFit
+      </Typography>
+
       <Box
         component="form"
         onSubmit={register}
@@ -128,13 +156,9 @@ const Signup = (props) => {
           display: 'flex',
           flexDirection: 'column',
           gap: 2,
-          backgroundColor: 'background.paper',
+          backgroundColor: '#f6f8fa',
         }}
       >
-        {/* Title */}
-        <Typography variant="h5" gutterBottom>
-          Welcome! Please signup to continue
-        </Typography>
 
         {/* Show error if any */}
         {error && (
@@ -148,6 +172,14 @@ const Signup = (props) => {
           label="email"
           type="email"
           onChange={(e) => setEmail(e.target.value)}
+          size="small"
+          sx={{ 
+              backgroundColor: 'white',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+              },
+              borderRadius: 2,
+            }}
         />
         {/* <TextField
           required
@@ -161,6 +193,14 @@ const Signup = (props) => {
           label="password"
           type="password"
           onChange={(e) => setPassword(e.target.value)}
+          size="small"
+          sx={{ 
+              backgroundColor: 'white',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+              },
+              borderRadius: 2,
+            }}
         />
         <TextField
           required
@@ -168,6 +208,14 @@ const Signup = (props) => {
           label="confirm password"
           type="password"
           onChange={(e) => setConfirmPassword(e.target.value)}
+          size="small"
+          sx={{ 
+              backgroundColor: 'white',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+              },
+              borderRadius: 2,
+            }}
         />
 
         {/* Captcha input and preview */}
@@ -177,14 +225,27 @@ const Signup = (props) => {
             label="Captcha"
             value={inputCaptcha}
             onChange={(e) => setInputCaptcha(e.target.value)}
+            sx={{ 
+              backgroundColor: 'white',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+              },
+              borderRadius: 2,
+            }}
+            size="small"
           />
           <CanvasCaptcha text={captcha} />
         </Box>
 
         {/* Submit button */}
-        <Button type="submit" variant="contained">
+        <Button type="submit" variant="contained" sx={{ backgroundColor: "#1f883d"}}>
           Signup
         </Button>
+      </Box>
+      <Box>
+        <Typography variant="body2" color="textSecondary" align="center">
+          Already have an account? <Button onClick={() => navigate('/student')} color="primary">Login</Button>
+        </Typography>
       </Box>
     </Container>
   )
