@@ -44,7 +44,7 @@ class AuthService:
         return True, "密码格式正确"
     
     @staticmethod
-    def register_user(email, password, user_type):
+    def register_user(email, password):
         if not AuthService.validate_email(email):
             return False, "邮箱格式不正确"
         is_valid, message = AuthService.validate_password(password)
@@ -52,14 +52,8 @@ class AuthService:
             return False, message
         if User.query.filter_by(email=email).first():
             return False, "邮箱已被注册"
-        if user_type == 'teacher':
-            role = 'teacher'
-        elif user_type == 'student':
-            role = 'student'
-        else:
-            return False, "user_type 只能为 student 或 teacher"
         try:
-            user = User(email=email, username=None, password=password, role=role)
+            user = User(email=email, username=None, password=password, role=None)
             db.session.add(user)
             db.session.commit()
             return True, "注册成功"
@@ -68,27 +62,21 @@ class AuthService:
             return False, f"注册失败: {str(e)}"
     
     @staticmethod
-    def login_user(email, password, user_type, secret_key=None):
-        if user_type == 'teacher':
-            if not secret_key or secret_key != Config.TEACHER_SECRET_KEY:
-                return False, "教师登录需要正确的 secret_key"
-            user = User.query.filter_by(email=email, role='teacher').first()
-            if not user:
-                return False, "教师用户不存在"
-            if not user.check_password(password):
-                return False, "密码错误"
-            token = generate_token(user.id, user.role)
-            return True, (token, 'teacher', user.to_dict())
-        elif user_type == 'student':
-            user = User.query.filter_by(email=email, role='student').first()
-            if not user:
-                return False, "用户不存在"
-            if not user.check_password(password):
-                return False, "密码错误"
-            token = generate_token(user.id, user.role)
-            return True, (token, 'student', user.to_dict())
+    def login_user(email, password, secret_key=None):
+        user = User.query.filter_by(email=email).first()
+        if not user or not user.check_password(password):
+            return False, "账号或密码错误"
+        if secret_key:
+            # 老师登录
+            if secret_key == Config.TEACHER_SECRET_KEY:
+                user_type = 'teacher'
+                return True, (generate_token(user.id, user_type), user_type, user.to_dict())
+            else:
+                return False, "密钥错误或不是老师账号"
         else:
-            return False, "user_type 只能为 student 或 teacher"
+            # 学生登录
+            user_type = 'student'
+            return True, (generate_token(user.id, user_type), user_type, user.to_dict())
     
     @staticmethod
     def get_user_by_id(user_id):

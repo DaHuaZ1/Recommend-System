@@ -32,10 +32,8 @@ class User(db.Model):
     # 存储的是加密后的密码，不是明文密码
     password_hash = db.Column(db.String(255), nullable=False)
     
-    # 用户角色，不能为空，默认为学生
-    # 'student': 学生角色，可以创建/加入小组，上传简历
-    # 'teacher': 教师角色，可以上传项目，管理推荐
-    role = db.Column(db.String(20), nullable=False, default='student')
+    # 用户角色，允许为空
+    role = db.Column(db.String(20), nullable=True)
     
     def __init__(self, email, username, password, role='student'):
         """
