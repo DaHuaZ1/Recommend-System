@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Routes, Route, BrowserRouter, useLocation } from 'react-router-dom';
+import { Routes, Route, BrowserRouter } from 'react-router-dom';
 
 // Import page and UI components
-import Home from './components/Homepage';
+import HomeStd from './components/HomepageStd';
 import LoginStd from './components/loginPageStd';
 import Signup from './components/registerPage';
 import LoginStf from './components/loginPageStf';
+import HomeStf from './components/HomepageStf';
+
+// Import MUI components
 import CssBaseline from '@mui/material/CssBaseline';
 
 function App() {
@@ -17,7 +20,8 @@ function App() {
       <CssBaseline />
       <Routes>
         <Route path="/" element={<LoginStd setToken={setToken}/>} />
-        <Route path="/index" element={<Home token={token}/>} />
+        <Route path="/indexStd" element={<HomeStd token={token}/>} />
+        <Route path="/indexStf" element={<HomeStf token={token}/>} />
         <Route path="/student" element={<LoginStd setToken={setToken} />} />
         <Route path="/staff" element={<LoginStf setToken={setToken} />} />
         <Route path="/signup" element={<Signup setToken={setToken} />} />
