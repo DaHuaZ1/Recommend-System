@@ -86,10 +86,9 @@ export default function Signup() {
 
   /* ========== rendering ========== */
   return (
-    <Box container sx={{ minHeight: '100vh' }} display="flex">
+    <Box sx={{ minHeight: '100vh', display: 'flex' }}>
       {/* ---------- left side ---------- */}
       <Box
-        item md={6}
         sx={{
           display: { xs: 'none', md: 'flex' },
           flexDirection: 'column',
@@ -98,7 +97,7 @@ export default function Signup() {
           backgroundSize: 'cover',
           color: '#fff',
           p: 8,
-          width: '50%',
+          flexBasis: { md: '50%' },
         }}
       >
         <Typography variant="h3" sx={{ fontWeight: 600, mb: 2 }}>
@@ -116,7 +115,7 @@ export default function Signup() {
       </Box>
 
       {/* ---------- right side ---------- */}
-      <Box item xs={12} md={6} sx={{ width:'50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'center', flexBasis: { xs: '100%', md: '50%' } }}>
         <Container maxWidth="sm">
           {/* Logo & Log in link */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
