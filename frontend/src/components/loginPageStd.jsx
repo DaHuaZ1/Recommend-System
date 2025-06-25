@@ -69,7 +69,7 @@ const LoginStd = (props) => {
   const signin = async (e) => {
     e.preventDefault(); // Prevent default form submission
 
-    const url = `${backendURL}/admin/auth/login`;
+    const url = `${backendURL}/api/login`;
 
     // UI testing bypass for captcha
     const isBypassCaptcha = import.meta.env.MODE === 'development' && inputCaptcha.toUpperCase() === 'AAAA';
@@ -87,7 +87,7 @@ const LoginStd = (props) => {
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password})
     });
 
     const data = await response.json();
@@ -97,10 +97,10 @@ const LoginStd = (props) => {
       localStorage.setItem(AUTH.USER_KEY, email);
       localStorage.setItem(AUTH.Token_key, data.token);
       props.setToken(data.token); // Set parent state
-      navigate("/index");     // Redirect to dashboard
+      navigate("/indexStd");     // Redirect to student index page
     } else {
       // Show error from backend or generic message
-      setError(data.error || "Legendary Secret Key Login Failed");
+      setError(data.error || "Login Failed");
     }
   };
 
