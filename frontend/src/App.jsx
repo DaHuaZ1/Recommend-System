@@ -7,6 +7,7 @@ import LoginStd from './components/loginPageStd';
 import Signup from './components/registerPage';
 import LoginStf from './components/loginPageStf';
 import HomeStf from './components/HomepageStf';
+import UploadStd from './components/uploadPageStd';
 
 // Import MUI components
 import CssBaseline from '@mui/material/CssBaseline';
@@ -20,10 +21,11 @@ function App() {
       <CssBaseline />
       <Routes>
         <Route path="/" element={<LoginStd setToken={setToken}/>} />
-        <Route path="/indexStd" element={<HomeStd token={token}/>} />
-        <Route path="/indexStf" element={<HomeStf token={token}/>} />
-        <Route path="/student" element={<LoginStd setToken={setToken} />} />
-        <Route path="/staff" element={<LoginStf setToken={setToken} />} />
+        <Route path="/student/index" element={<HomeStd token={token}/>} />
+        <Route path="/student/login" element={<LoginStd setToken={setToken} />} />
+        <Route path='/student/upload' element={<UploadStd token={token} />} />
+        <Route path="/staff/index" element={<HomeStf token={token}/>} />
+        <Route path="/staff/login" element={<LoginStf setToken={setToken} />} />
         <Route path="/signup" element={<Signup setToken={setToken} />} />
       </Routes>
     </BrowserRouter>
