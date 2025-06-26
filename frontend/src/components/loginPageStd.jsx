@@ -58,7 +58,7 @@ const LoginStd = (props) => {
 
   const handleTabChange = (event, newValue) => {
     if (newValue === 1) {
-      navigate("/staff"); // Redirect to register page
+      navigate("/staff/login"); // Redirect to register page
       return;
     }
 
@@ -97,7 +97,11 @@ const LoginStd = (props) => {
       localStorage.setItem(AUTH.USER_KEY, email);
       localStorage.setItem(AUTH.Token_key, data.token);
       props.setToken(data.token); // Set parent state
-      navigate("/indexStd");     // Redirect to student index page
+      if (data.resume === true) {
+        navigate("/student/index"); // Redirect to student index page
+      } else {
+        navigate("/student/upload"); // Redirect to student upload resume page
+      }     
     } else {
       // Show error from backend or generic message
       setError(data.error || "Login Failed");
