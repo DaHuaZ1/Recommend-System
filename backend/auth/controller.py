@@ -72,7 +72,7 @@ def login():
             password:
               type: string
               example: qqqqqq
-            secret_key:
+            secretKey:
               type: string
               example: 123456
               description: 仅教师登录时需要
@@ -84,19 +84,9 @@ def login():
           properties:
             token:
               type: string
-            user_type:
+            resume:
               type: string
-            user:
-              type: object
-              properties:
-                id:
-                  type: integer
-                email:
-                  type: string
-                username:
-                  type: string
-                role:
-                  type: string
+              example: "false"
       400:
         description: 参数错误
       401:
@@ -111,11 +101,14 @@ def login():
                 return jsonify({'message': f'缺少必需字段: {field}', 'status': 'fail'}), 400
         email = data.get('email')
         password = data.get('password')
-        secret_key = data.get('secret_key')
-        success, result = AuthService.login_user(email, password, secret_key)
+        secretKey = data.get('secretKey')
+        success, result = AuthService.login_user(email, password, secretKey)
         if success:
             token, user_type, user = result
-            return jsonify({'token': token, 'user_type': user_type, 'user': user}), 200
+            if user_type == 'student':
+                return jsonify({'token': token, 'resume': 'false'}), 200
+            else:
+                return jsonify({'token': token}), 200
         else:
             return jsonify({'message': result, 'status': 'fail'}), 401
     except Exception as e:

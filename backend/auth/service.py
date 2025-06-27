@@ -62,7 +62,7 @@ class AuthService:
             return False, f"注册失败: {str(e)}"
     
     @staticmethod
-    def login_user(email, password, secret_key=None):
+    def login_user(email, password, secretKey=None):
         """
         用户登录接口
         ---
@@ -81,7 +81,7 @@ class AuthService:
                 password:
                   type: string
                   example: qqqqqq
-                secret_key:
+                secretKey:
                   type: string
                   example: 123456
                   description: "仅教师登录时需要"
@@ -127,15 +127,14 @@ class AuthService:
         """
         print("email:", email, flush=True)
         print("password:", password, flush=True)
-        print("secret_key:", secret_key, flush=True)
+        print("secretKey:", secretKey, flush=True)
         user = User.query.filter_by(email=email).first()
         if not user or not user.check_password(password):
             return False, "账号或密码错误"
-        if secret_key:
+        if secretKey:
             # 老师登录
-            if secret_key != Config.TEACHER_SECRET_KEY:
+            if secretKey != Config.TEACHER_SECRET_KEY:
                 return False, "密钥错误或不是老师账号"
-                
             else:
                 user_type = 'teacher'
                 return True, (generate_token(user.id, user_type), user_type, user.to_dict())
