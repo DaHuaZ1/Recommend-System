@@ -42,15 +42,14 @@ def verify_token(token):
     返回:
         dict/None: 验证成功返回payload，失败返回None
     """
+    print('verify_token 被调用，收到 token:', token, flush=True)
     try:
-        # 使用应用配置的密钥解码token
+        print('当前 SECRET_KEY:', current_app.config.get('SECRET_KEY'), flush=True)
         payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+        print('token 解码成功，payload:', payload, flush=True)
         return payload
-    except jwt.ExpiredSignatureError:
-        # token已过期
-        return None
-    except jwt.InvalidTokenError:
-        # token无效（签名错误、格式错误等）
+    except Exception as e:
+        print('token 校验失败:', e, flush=True)
         return None
 
 def token_required(f):

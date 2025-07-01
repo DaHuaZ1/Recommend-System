@@ -137,10 +137,14 @@ class AuthService:
                 return False, "密钥错误或不是老师账号"
             else:
                 user_type = 'teacher'
+                user.role = 'teacher'
+                db.session.commit()
                 return True, (generate_token(user.id, user_type), user_type, user.to_dict())
         else:
             # 学生登录
             user_type = 'student'
+            user.role = 'student'
+            db.session.commit()
             return True, (generate_token(user.id, user_type), user_type, user.to_dict())
     
     @staticmethod

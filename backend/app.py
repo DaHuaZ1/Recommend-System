@@ -6,6 +6,7 @@ from config import Config  # 导入配置文件
 from models.user import db  # 导入数据库实例
 from auth.controller import auth_bp  # 导入认证模块的蓝图
 from flasgger import Swagger  # 新增
+from resume.controller import resume_bp
 
 
 def create_app():
@@ -31,6 +32,7 @@ def create_app():
     # 注册蓝图 - 将认证模块的路由注册到主应用
     # url_prefix='/api' 表示所有认证相关路由都以 /api 开头
     app.register_blueprint(auth_bp, url_prefix='/api')
+    app.register_blueprint(resume_bp, url_prefix='/api')
 
     # 在应用上下文中创建数据库表
     # 如果表不存在，会自动创建

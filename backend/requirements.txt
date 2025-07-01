@@ -1,4 +1,4 @@
-Flask==2.3.3
+Flask==2.2.5
 Flask-SQLAlchemy==3.0.5
 Flask-CORS==4.0.0
 PyJWT==2.8.0
@@ -7,3 +7,5 @@ Werkzeug==2.3.7
 python-dotenv==1.0.0 
 cryptography
 flasgger==0.9.5
+pdfplumber
+python-docx

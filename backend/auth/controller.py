@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 from auth.service import AuthService
 from utils.jwt_utils import generate_token, token_required, teacher_required, student_required
+from utils.resume_utils import parse_resume
+from models.student_resume import StudentResume
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -53,7 +55,6 @@ def register():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    # print("login接口被调用", flush=True)
     """
     用户登录接口
     ---
@@ -84,9 +85,10 @@ def login():
           properties:
             token:
               type: string
+              description: 登录成功后的认证 token
             resume:
-              type: string
-              example: "false"
+              type: boolean
+              description: 仅学生登录时返回，表示是否已上传简历
       400:
         description: 参数错误
       401:
@@ -102,16 +104,21 @@ def login():
         email = data.get('email')
         password = data.get('password')
         secretKey = data.get('secretKey')
+        print(f"email: {email}\npassword: {password}\nsecretKey: {secretKey}", flush=True)
         success, result = AuthService.login_user(email, password, secretKey)
         if success:
             token, user_type, user = result
             if user_type == 'student':
-                return jsonify({'token': token, 'resume': 'false'}), 200
+                has_resume = StudentResume.query.filter_by(user_id=user['id']).first() is not None
+                return jsonify({'token': token, 'resume': has_resume}), 200
             else:
                 return jsonify({'token': token}), 200
         else:
             return jsonify({'message': result, 'status': 'fail'}), 401
     except Exception as e:
+        import traceback
+        print('登录异常:', e, flush=True)
+        traceback.print_exc()
         return jsonify({'message': f'登录失败: {str(e)}', 'status': 'fail'}), 500
 
 # @auth_bp.route('/profile', methods=['GET'])
