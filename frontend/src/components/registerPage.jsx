@@ -10,7 +10,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 import backendURL from '../backendURL';
 import heroImg from '../assets/hero.webp';     // 左侧插图
-import logo from '../assets/unsw_0.png';      // 顶部 logo
+import logo from '../assets/logo.jpg';      // 顶部 logo
 import bg from '../assets/bg.webp';         // 背景图片
 
 // ---- 国家列表，可替换成接口返回 ----
@@ -72,7 +72,7 @@ export default function Signup() {
       const data = await res.json();
 
       if (res.ok) {
-        navigate('/student', { replace: true });
+        navigate('/student/login', { replace: true });
       } else {
         setError(data.error || 'Registration failed');
       }
@@ -119,7 +119,7 @@ export default function Signup() {
         <Container maxWidth="sm">
           {/* Logo & Log in link */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-            <Box component="img" src={logo} alt="logo" sx={{ width: 110, height: 50 }} />
+            <Box component="img" src={logo} alt="logo" sx={{ width: 100, height: 100 }} />
             <Typography variant="body2" sx={{ alignSelf: 'center' }}>
               Already have an account?{' '}
               <Link to="/student" style={{ color: '#0969da' }}>Sign in →</Link>

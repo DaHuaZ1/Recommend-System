@@ -22,7 +22,7 @@ import AUTH from "../Constant";
 import CanvasCaptcha from './CanvasCaptcha'; 
 import backendURL from '../backendURL'; // Import backend URL
 
-import logo from '../assets/unsw_0.png'; // Import logo image
+import logo from '../assets/logo.jpg'; // Import logo image
 
 
 const LoginStf = (props) => {
@@ -121,7 +121,7 @@ const LoginStf = (props) => {
         <img
           src={logo}
           alt="Logo"
-          style={{ width: '110px', height: '50px' }}
+          style={{ width: '100px', height: '100px' }}
         />
       </Box>
       {/* Title */}
