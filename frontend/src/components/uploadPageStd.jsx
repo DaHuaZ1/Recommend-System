@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef, useEffect } from "react";
+import { useCallback, useState, useRef} from "react";
 import { useNavigate } from "react-router-dom";
 import { useDropzone } from "react-dropzone";
 import {
@@ -10,13 +10,17 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Backdrop,
+  CircularProgress
 } from "@mui/material";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CachedIcon from '@mui/icons-material/Cached';
 
 import fileLogo from "../assets/file_logo.png";
 import fileLogo2 from "../assets/file_logo2.png";
+
+import backendURL from "../backendURL";
 
 const steps = ["Resume", "Personal Info"]; // 2个步骤
 
@@ -35,37 +39,36 @@ export default function UploadStd() {
   const fileInputRef = useRef(null); // 文件输入引用
   const formRef = useRef(null);
 
+  const token = localStorage.getItem("token");
+
   const navigate = useNavigate();
 
-  // 模拟获取用户信息
-  useEffect(() => {
-    if (currentStep === 1) {
-      setLoading(true);
-      // 这里用 setTimeout 模拟异步请求
-      setTimeout(() => {
-        // 假设 response 结构如下
-        const response = {
-          name: "Jack Smith",
-          skill: "backend development, React",
-          major: "Information Technology",
-          email: "JackSmith@ad.unsw.edu.au"
-        };
-        setFormData({
-          name: response.name || "",
-          skill: response.skill || "",
-          major: response.major || "",
-          email: response.email || ""
-        });
-        setLoading(false);
-      }, 800);
+  // 发送简历给后端识别
+  const uploadResume = async () => {
+    const body = new FormData();
+    body.append("resume", uploadedFile);
+    console.log("body:", body);
+
+    const res = await fetch(`${backendURL}/api/student/resume`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body,
+      // 注意：FormData会自动设置Content-Type
+      // "Content-Type": "multipart/form-data"                   
+    });
+
+    if (!res.ok) {
+      throw new Error(`Upload failed: ${res.status}`);
     }
-  }, [currentStep]);
+    return res.json();
+  };
 
   /* ---------- 拖拽上传逻辑 ---------- */
   const onDrop = useCallback((acceptedFiles) => {
     if (acceptedFiles.length > 0) {
       setUploadedFile(acceptedFiles[0]);
-      // TODO: 把文件发给后端或存状态
       console.log("Selected files:", acceptedFiles);
     }
   }, []);
@@ -86,9 +89,24 @@ export default function UploadStd() {
   const primaryYellow = "#FFCB05"; // GitHub 风格的亮黄
 
   /* ---------- 下一步按钮处理函数 ---------- */
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (currentStep === 0) {
-      setCurrentStep(1);
+      try {
+        setLoading(true);
+        const profile = await uploadResume();
+        setFormData({
+          name: profile.name || "",
+          skill: profile.skill || "",
+          major: profile.major || "",
+          email: profile.email || ""
+        });
+        setCurrentStep(1);
+      } catch (err) {
+        alert("Upload failed, please try again.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     } else if (currentStep === 1) {
       if (formRef.current) {
         const isValid = formRef.current.checkValidity();
@@ -150,12 +168,16 @@ export default function UploadStd() {
   const handleDialogConfirm = async () => {
     setSaving(true);
     try {
-      // 1. 发送到后端（这里用fetch举例，实际可用axios等）
-      await fetch("/api/student/profile", {
+      // 1. 发送到后端
+      const res = await fetch(`${backendURL}/api/student/profile`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+         },
         body: JSON.stringify(formData)
       });
+      console.log("Response:", res);
       // 2. 本地存储
       localStorage.setItem("student_profile", JSON.stringify(formData));
       // 3. 跳转
@@ -418,6 +440,13 @@ export default function UploadStd() {
         </Box>
       )}
 
+      <Backdrop
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={loading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
+
       {/* 步骤二：个人信息表单 */}
       {currentStep === 1 && (
         <form ref={formRef} onSubmit={(e) => e.preventDefault()}>
@@ -588,15 +617,11 @@ export default function UploadStd() {
           <Typography>Confirm and go to Home.</Typography>
         </DialogContent>
         <DialogActions sx={{ justifyContent: "space-between", px: 3, pb: 2 }}>
-          <Button sx={{color:"red"}} onClick={handleDialogCancel} disabled={saving}>Cancel</Button>
+          <Button color="error" onClick={handleDialogCancel} disabled={saving}>Cancel</Button>
           <Button
             onClick={handleDialogConfirm}
             variant="contained"
-            sx={{
-              bgcolor: "green",
-              color: "#fff",
-              "&:hover": { bgcolor: "lightgreen" }
-            }}
+            color="primary"
             disabled={saving}
           >
             {saving ? "Saving..." : "Confirm"}
