@@ -44,13 +44,6 @@ export default function Signup() {
   })();
   const pwColor = ['error', 'warning', 'success'][Math.min(pwScore, 2)];
 
-//   // 模拟用户名可用性检查（真实场景应调用后端）
-//   const checkUsername = (name) => {
-//     // demo：只要包含 "bit" 就当可用
-//     if (!name) { setNameOK(null); return; }
-//     setNameOK(!name.includes('bit'));
-//   };
-
   /* ========== submit ========== */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -122,7 +115,7 @@ export default function Signup() {
             <Box component="img" src={logo} alt="logo" sx={{ width: 100, height: 100 }} />
             <Typography variant="body2" sx={{ alignSelf: 'center' }}>
               Already have an account?{' '}
-              <Link to="/student" style={{ color: '#0969da' }}>Sign in →</Link>
+              <Link to="/student/login" style={{ color: '#0969da' }}>Sign in →</Link>
             </Typography>
           </Box>
 
@@ -177,7 +170,7 @@ export default function Signup() {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton onClick={() => setShowPw(!showPw)} edge="end" size="small">
-                        {showPw ? <VisibilityOff /> : <Visibility />}
+                        {showPw ? <Visibility /> : <VisibilityOff />}
                       </IconButton>
                     </InputAdornment>
                   ),
