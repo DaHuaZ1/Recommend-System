@@ -197,3 +197,63 @@ def update_profile():
         return jsonify({'status': '200'})
     except Exception as e:
         return jsonify({'error': str(e)}), 400 
+
+@resume_bp.route('/student/profile', methods=['GET'])
+def get_profile():
+    """
+    获取学生个人信息接口
+    ---
+    tags:
+      - 学生
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+        description: Bearer token
+    produces:
+      - application/json
+    responses:
+      200:
+        description: 获取成功
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: "200"
+            name:
+              type: string
+              example: "xxx"
+            email:
+              type: string
+              example: "xxx"
+            major:
+              type: string
+              example: "xxx"
+            skill:
+              type: string
+              example: "xxx"
+      401:
+        description: 未授权或token无效
+      404:
+        description: 未找到简历信息
+    """
+    token = get_token_from_header()
+    if not token:
+        return jsonify({'error': '未授权'}), 401
+    payload = verify_token(token)
+    if not payload:
+        return jsonify({'error': 'token无效'}), 401
+    user_id = payload.get('user_id')
+    from models.student_resume import StudentResume
+    resume = StudentResume.query.filter_by(user_id=user_id).first()
+    if not resume:
+        return jsonify({'error': '未找到简历信息'}), 404
+    return jsonify({
+        'status': '200',
+        'name': resume.name,
+        'email': resume.email,
+        'major': resume.major,
+        'skill': resume.skill
+    }) 

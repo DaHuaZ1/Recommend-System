@@ -80,12 +80,6 @@ def extract_info_from_text(text):
     从文本中提取关键信息
     这里使用简单的规则，实际项目中可能需要更复杂的算法
     """
-    # 示例：简单的信息提取规则
-    # 实际项目中应该使用更复杂的算法，比如：
-    # 1. 使用正则表达式匹配特定模式
-    # 2. 使用自然语言处理技术
-    # 3. 使用机器学习模型
-    
     lines = text.split('\n')
     info = {
         'name': '',
@@ -93,33 +87,47 @@ def extract_info_from_text(text):
         'major': '',
         'skill': ''
     }
-    
     import re
     email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
-    
-    # 遍历文本行
-    for line in lines:
-        line = line.strip()
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
         if not line:
+            i += 1
             continue
-            
         # 查找邮箱
         email_match = re.search(email_pattern, line)
         if email_match and not info['email']:
             info['email'] = email_match.group()
-            
-        # 查找姓名（假设姓名是2-4个中文字符）
+        # 查找英文/中文姓名
         if not info['name']:
-            name_match = re.search(r'[\u4e00-\u9fa5]{2,4}', line)
-            if name_match:
-                info['name'] = name_match.group()
-        
-        # 查找专业（关键词匹配）
-        if '专业' in line and not info['major']:
-            info['major'] = line
-            
-        # 查找技能（关键词匹配）
-        if any(keyword in line.lower() for keyword in ['技能', 'skill', '技术栈']) and not info['skill']:
-            info['skill'] = line
-    
+            # 1. Name: xxx
+            if 'Name:' in line:
+                value = line.split('Name:')[-1].strip()
+                if not value and i+1 < len(lines):
+                    value = lines[i+1].strip()
+                if value:
+                    info['name'] = value
+            # 2. 中文名
+            if not info['name']:
+                name_match = re.search(r'[\u4e00-\u9fa5]{2,4}', line)
+                if name_match:
+                    info['name'] = name_match.group()
+        # 查找专业
+        if not info['major']:
+            # 1. Major: xxx
+            if 'Major:' in line:
+                value = line.split('Major:')[-1].strip()
+                if not value and i+1 < len(lines):
+                    value = lines[i+1].strip()
+                if value:
+                    info['major'] = value
+            # 2. 中文"专业"
+            if not info['major'] and '专业' in line:
+                info['major'] = line
+        # 查找技能
+        if not info['skill']:
+            if any(keyword in line.lower() for keyword in ['技能', 'skill', '技术栈']):
+                info['skill'] = line
+        i += 1
     return info 
