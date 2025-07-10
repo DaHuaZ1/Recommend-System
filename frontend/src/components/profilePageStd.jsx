@@ -10,13 +10,11 @@ import {
   Stack,
 } from '@mui/material';
 import TopBar from './Bar';
-
 import backendURL from '../backendURL';
 
 export default function ProfilePageStd() {
   const navigate = useNavigate();
 
-  // 这里简单用默认示例数据
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,46 +22,66 @@ export default function ProfilePageStd() {
     skill: '',
   });
 
-  // 获取用户数据的函数
-  const fetchUserData = async () => {
-    const res = await fetch(`${backendURL}/api/student/profile`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setFormData({
-        name: data.name || '',
-        email: data.email || '',
-        major: data.major || '',
-        skill: data.skill || '',
-      });
-    } else {
-      console.error('Failed to fetch user data');
-    }
-  }
+  const [originalData, setOriginalData] = useState(null);
 
-  // 更新用户数据的函数
-  const updateUserData = async (data) => {
-    const res = await fetch(`${backendURL}/api/student/profile`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify(data),
-    });
-    if (res.ok) {
-      alert('Profile updated successfully');
-    } else {
-      const errorData = await res.json();
-      console.error('Failed to update profile:', errorData);
-      alert('Failed to update profile: ' + (errorData.message || 'Unknown error'));
+  // 判断数据是否被修改
+  const isChanged = () => {
+    return originalData && JSON.stringify(formData) !== JSON.stringify(originalData);
+  };
+
+  // 获取用户数据
+  const fetchUserData = async () => {
+    try {
+      const res = await fetch(`${backendURL}/api/student/profile`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "ngrok-skip-browser-warning": "true", // 忽略浏览器警告
+        }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const cleanedData = {
+          name: data.name || '',
+          email: data.email || '',
+          major: data.major || '',
+          skill: data.skill || '',
+        };
+        setFormData(cleanedData);
+        setOriginalData(cleanedData);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
     }
-  }
+  };
+
+  // 更新用户数据
+  const updateUserData = async (data) => {
+    try {
+      const res = await fetch(`${backendURL}/api/student/profile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        alert('Profile updated successfully');
+        setOriginalData(data); // 保存为新的原始数据
+      } else {
+        const errorData = await res.json();
+        alert('Failed to update profile: ' + (errorData.message || 'Unknown error'));
+        console.error('Failed to update profile:', errorData);
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Update failed. Please try again later.');
+    }
+  };
 
   useEffect(() => {
     fetchUserData();
@@ -73,30 +91,24 @@ export default function ProfilePageStd() {
     setFormData({ ...formData, [field]: e.target.value });
 
   const handleSave = async () => {
-    if (!formData.name || !formData.email || !formData.major || !formData.skill) {
+    const { name, email, major, skill } = formData;
+    if (!name || !email || !major || !skill) {
       alert('Please fill in all fields');
       return;
     }
-    // 验证是否跟之前的数据有变化
-    const originalData = {
-      name: formData.name,
-      email: formData.email,
-      major: formData.major,
-      skill: formData.skill,
-    };
-    if (JSON.stringify(originalData) === JSON.stringify(formData)) {
+
+    if (!isChanged()) {
       alert('No changes made');
       return;
     }
+
     await updateUserData(formData);
-    console.log('save', formData);
   };
 
   return (
     <>
       <TopBar />
 
-      {/* 页面主体 */}
       <Box
         sx={{
           mt: 6,
@@ -118,7 +130,6 @@ export default function ProfilePageStd() {
               Personal Information
             </Typography>
 
-            {/* 表单区域 */}
             <Stack spacing={3}>
               <TextField
                 label="Name"
@@ -153,7 +164,6 @@ export default function ProfilePageStd() {
               />
             </Stack>
 
-            {/* 按钮区 */}
             <Box
               sx={{
                 mt: 4,
@@ -165,10 +175,18 @@ export default function ProfilePageStd() {
               <Button
                 variant="outlined"
                 color="error"
-                onClick={() => navigate(-1)} // 返回上一页
+                onClick={() => {
+                  if (isChanged()) {
+                    if (!window.confirm('Are you sure you want to discard changes?')) {
+                      return;
+                    }
+                  }
+                  navigate(-1);
+                }}
               >
                 Back
               </Button>
+
               <Button variant="contained" onClick={handleSave}>
                 Save
               </Button>
