@@ -15,6 +15,9 @@ import GroupStd from './components/groupPageStd';
 // Import MUI components
 import CssBaseline from '@mui/material/CssBaseline';
 
+// Import custom components
+import ScrollToTop from './components/scrollToTop';
+
 function App() {
   
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -22,6 +25,7 @@ function App() {
   return (
     <BrowserRouter>
       <CssBaseline />
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<LoginStd setToken={setToken}/>} />
         <Route path="/student/index" element={<HomeStd token={token}/>} />
