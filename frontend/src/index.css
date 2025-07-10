@@ -1,0 +1,14 @@
+/* index.css 或 App.css */
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: auto;           /* 仍能滚动 */
+  /* 下面 3 行分别针对 Chrome/Edge/Safari、Firefox、IE */
+  scrollbar-width: none;    /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;            /* Chrome/Edge/Safari */
+}
