@@ -277,7 +277,7 @@ export default function Signup() {
                 fontWeight: 600,
               }}
             >
-              {loading ? 'Creating…' : 'Sing Up >'}
+              {loading ? 'Creating…' : 'Sign Up >'}
             </Button>
           </Box>
         </Container>
