@@ -9,19 +9,19 @@ class Config:
     """
     
     # ==================== 数据库配置 ====================
-    # MySQL服务器地址，默认localhost
-    MYSQL_HOST = os.environ.get('MYSQL_HOST', 'localhost')
+    # MySQL服务器地址，用户需填写阿里云公网IP
+    MYSQL_HOST = os.environ.get('MYSQL_HOST', '182.92.72.100')
     
     # MySQL端口号，默认3306
     MYSQL_PORT = int(os.environ.get('MYSQL_PORT', 3306))
     
-    # MySQL用户名，默认root
-    MYSQL_USER = os.environ.get('MYSQL_USER', 'root')
+    # MySQL用户名，已改为cakeuser
+    MYSQL_USER = os.environ.get('MYSQL_USER', 'cakeuser')
     
-    # MySQL密码，需要在环境变量中设置
-    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', 'wang159357')
+    # MySQL密码，已改为123456
+    MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD', '123456')
     
-    # 数据库名称，默认capstone_project
+    # 数据库名称，已改为capstone_project
     MYSQL_DB = os.environ.get('MYSQL_DB', 'capstone_project')
     
     # ==================== SQLAlchemy配置 ====================
