@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TopBar from './Bar';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
@@ -9,18 +10,52 @@ import InputBase from '@mui/material/InputBase';
 import Typography from '@mui/material/Typography';
 
 import ProjectSingle from './projectSingle';
+import backendURL from '../backendURL';
 
 const HomeStd = () => {
   const [keyword, setKeyword] = useState('');
+  const [projects, setProjects] = useState([]);
+  const navigate = useNavigate();
 
   // 点击搜索图标的回调
   const handleSearch = () => {
     console.log('Search:', keyword);
     // TODO: 替换为真正的搜索逻辑
+    // 直接匹配现有的项目列表的标题或描述
   };
 
+  // fetch所有项目列表的函数
+  const fetchProjects = async () => {
+    try {
+      const res = await fetch(`${backendURL}/api/student/projects`,{
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await res.json();
+      setProjects(data.projects || []);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    } 
+  };
+
+  // 页面加载时可以从后端获取项目列表
+  useEffect(() => {
+    if (!localStorage.getItem('token')) {
+      // 如果没有token，重定向到登录页面
+      navigate('/student/login');
+      return;
+    }
+    fetchProjects();
+  }, []);
+
   return (
-    <Box sx={{bgcolor:"#fbfbfb"}}>
+    <Box sx={{bgcolor:"#fbfbfb", minHeight: '100vh'}}>
       {/* 顶部导航栏 */}
       <TopBar />
 
@@ -101,19 +136,15 @@ const HomeStd = () => {
             color: '#DBDBDB',
           }}
         >
-          All&nbsp;Projects&nbsp;Here
+          {projects.length > 0 ? "All Projects Here" : "No projects found. Please check back later."}
         </Typography>
       </Divider>
 
       {/* 项目列表 */}
       <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-          <ProjectSingle />
-          <ProjectSingle />
-          <ProjectSingle />
-          <ProjectSingle />
-          <ProjectSingle />
-          <ProjectSingle />
-          <ProjectSingle />
+        {projects.length > 0 && projects.map((project, index) => (
+          <ProjectSingle key={index} project={project} />
+        ))}
       </Box>
     </Box>
   );
