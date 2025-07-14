@@ -143,8 +143,8 @@ export default function ProfilePageStd() {
                 label="Email"
                 fullWidth
                 size="small"
-                value={formData.email}
-                onChange={handleChange('email')}
+                value={localStorage.getItem('email') || formData.email}
+                disabled
               />
 
               <TextField
@@ -161,6 +161,7 @@ export default function ProfilePageStd() {
                 size="small"
                 value={formData.skill}
                 onChange={handleChange('skill')}
+                multiline
               />
             </Stack>
 
