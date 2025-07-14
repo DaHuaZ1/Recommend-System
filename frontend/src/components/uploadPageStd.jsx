@@ -12,7 +12,8 @@ import {
   DialogContent,
   DialogActions,
   Backdrop,
-  CircularProgress
+  CircularProgress,
+  TextField
 } from "@mui/material";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CachedIcon from '@mui/icons-material/Cached';
@@ -490,9 +491,8 @@ export default function UploadStd() {
                   <input
                     name="email"
                     type="email"
-                    value={formData.email}
+                    value={localStorage.getItem('email') || formData.email}
                     onChange={handleInputChange}
-                    placeholder="Enter your email"
                     style={{
                       width: "100%",
                       padding: "8px 12px",
@@ -501,6 +501,7 @@ export default function UploadStd() {
                       fontSize: 16
                     }}
                     required
+                    disabled
                   />
                 </Box>
                 <Box>
@@ -522,19 +523,17 @@ export default function UploadStd() {
                 </Box>
                 <Box>
                   <Typography variant="body2" mb={0.5}>SKILL</Typography>
-                  <input
+                  <TextField
                     name="skill"
                     value={formData.skill}
                     onChange={handleInputChange}
                     placeholder="Enter your skills (e.g., backend development, React)"
                     style={{
                       width: "100%",
-                      padding: "8px 12px",
-                      borderRadius: 4,
-                      border: "1px solid #ccc",
-                      fontSize: 16
+                      fontSize: 16,
                     }}
                     required
+                    multiline
                   />
                 </Box>
               </Stack>
