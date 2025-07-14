@@ -10,7 +10,7 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 
-export default function ProjectSingle() {
+export default function ProjectSingle({project}) {
   const [open, setOpen] = useState(false);
 
   /* ---------- 打开/关闭弹窗 ---------- */
@@ -21,6 +21,9 @@ export default function ProjectSingle() {
   const handleDownload = () => {
     // TODO: 替换为实际下载逻辑
     console.log("Download triggered");
+    if (project.pdfFile) {
+      window.open(project.pdfFile, "_blank");
+    }
   };
 
   return (
@@ -44,10 +47,10 @@ export default function ProjectSingle() {
         {/* 左侧文字 */}
         <Box sx={{ flexGrow: 1 }}>
           <Typography variant="h6" fontWeight={700}>
-            Project 26
+            {project.number || "Project"}
           </Typography>
           <Typography color="text.secondary">
-            Project Information……
+            {project.title || "Project Title"}
           </Typography>
         </Box>
       </Paper>
@@ -66,37 +69,52 @@ export default function ProjectSingle() {
           <CloseIcon />
         </IconButton>
 
-        <DialogTitle fontWeight={700}>Project 26 Details</DialogTitle>
+        <DialogTitle fontWeight={700}>{project.title}</DialogTitle>
 
         <DialogContent dividers>
           {/* block display = 默认纵向排列 */}
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle1" fontWeight={600}>
-              Scope
-            </Typography>
-            <Typography color="text.secondary">
-              Build a full-stack web application helping students match with
-              projects based on their skillsets and interests.
-            </Typography>
-          </Box>
-
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle1" fontWeight={600}>
-              Requirement
-            </Typography>
-            <Typography color="text.secondary">
-              {/* • Responsive UI • RESTful API • Authentication • Unit / UI tests */}
-              React | Node.js | MongoDB | Jest | Docker
-            </Typography>
-          </Box>
-
           <Box>
             <Typography variant="subtitle1" fontWeight={600}>
               Background
             </Typography>
             <Typography color="text.secondary">
-              xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx<br />
-              xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+              Find on PDF file.
+            </Typography>
+          </Box>
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600}>
+              Client Name
+            </Typography>
+            <Typography color="text.secondary">
+              {project.clientName || "TBD"}
+            </Typography>
+          </Box>
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600}>
+              Group Capacity
+            </Typography>
+            <Typography color="text.secondary">
+              {project.groupCapacity || "TBD"}
+            </Typography>
+          </Box>
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600}>
+              Required Skills
+            </Typography>
+            <Typography color="text.secondary">
+              {project.requiredSkills || "TBD"}
+            </Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle1" fontWeight={600}>
+              Project Requirements
+            </Typography>
+            <Typography color="text.secondary">
+              {project.projectRequirements || "TBD"}
             </Typography>
           </Box>
         </DialogContent>
