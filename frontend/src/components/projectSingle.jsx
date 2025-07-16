@@ -10,6 +10,8 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 
+import backendURL from "../backendURL";
+
 export default function ProjectSingle({project}) {
   const [open, setOpen] = useState(false);
 
@@ -19,10 +21,8 @@ export default function ProjectSingle({project}) {
 
   /* ---------- 下载按钮回调（示例） ---------- */
   const handleDownload = () => {
-    // TODO: 替换为实际下载逻辑
-    console.log("Download triggered");
     if (project.pdfFile) {
-      window.open(project.pdfFile, "_blank");
+      window.open(backendURL+project.pdfFile, "_blank");
     }
   };
 
@@ -47,10 +47,10 @@ export default function ProjectSingle({project}) {
         {/* 左侧文字 */}
         <Box sx={{ flexGrow: 1 }}>
           <Typography variant="h6" fontWeight={700}>
-            {project.number || "Project"}
+            {"Project "+ project.projectNumber || "Project"}
           </Typography>
           <Typography color="text.secondary">
-            {project.title || "Project Title"}
+            {project.projectTitle || "Project Title"}
           </Typography>
         </Box>
       </Paper>
@@ -73,7 +73,7 @@ export default function ProjectSingle({project}) {
 
         <DialogContent dividers>
           {/* block display = 默认纵向排列 */}
-          <Box>
+          <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle1" fontWeight={600}>
               Background
             </Typography>
