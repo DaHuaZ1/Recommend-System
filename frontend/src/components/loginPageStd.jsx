@@ -96,6 +96,7 @@ const LoginStd = (props) => {
     if (data.token) {
       localStorage.setItem(AUTH.USER_KEY, email);
       localStorage.setItem(AUTH.Token_key, data.token);
+      localStorage.setItem("Grouped", data.grouped || false);
       props.setToken(data.token); // Set parent state
       if (data.resume === true) {
         navigate("/student/index"); // Redirect to student index page
