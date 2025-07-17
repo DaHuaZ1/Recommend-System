@@ -49,7 +49,12 @@ export default function ProjectSingle({project}) {
           <Typography variant="h6" fontWeight={700}>
             {"Project "+ project.projectNumber || "Project"}
           </Typography>
-          <Typography color="text.secondary">
+          <Typography color="text.secondary" sx={{ 
+            maxWidth: "600px",
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
             {project.projectTitle || "Project Title"}
           </Typography>
         </Box>
@@ -73,6 +78,15 @@ export default function ProjectSingle({project}) {
 
         <DialogContent dividers>
           {/* block display = 默认纵向排列 */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600}>
+              Title
+            </Typography>
+            <Typography color="text.secondary">
+              {project.projectTitle}
+            </Typography>
+          </Box>
+
           <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle1" fontWeight={600}>
               Background
