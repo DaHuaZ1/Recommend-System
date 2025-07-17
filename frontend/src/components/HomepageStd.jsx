@@ -16,6 +16,7 @@ const HomeStd = () => {
   const [keyword, setKeyword] = useState('');
   const [projects, setProjects] = useState([]);
   const [filteredProjects, setFilteredProjects] = useState([]);
+  const [showEnd, setShowEnd] = useState(false);
 
   const navigate = useNavigate();
 
@@ -69,6 +70,25 @@ const HomeStd = () => {
     fetchProjects();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 监听页面滚动
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const docHeight = document.documentElement.offsetHeight;
+
+      if (scrollTop + windowHeight >= docHeight - 10) {
+        setShowEnd(true);
+      }
+    };
+
+    if (projects.length >= 5) {
+      window.addEventListener('scroll', handleScroll);
+    }
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [projects]);
 
   return (
     <Box sx={{bgcolor:"#fbfbfb", minHeight: '100vh'}}>
@@ -160,17 +180,57 @@ const HomeStd = () => {
       </Divider>
 
       {/* 项目列表 */}
-      <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-        {filteredProjects.length > 0 ? (
-          filteredProjects.map((project, index) => (
-            <ProjectSingle key={index} project={project} />
-          ))
+      <Box sx={{ maxWidth: 800, mx: 'auto', pb: 2 }}>
+        {projects.length > 0 ? (
+          filteredProjects.length > 0 ? (
+            filteredProjects.map((project, index) => (
+              <ProjectSingle key={index} project={project} />
+            ))
+          ) : (
+            <Typography variant="body2" color="text.secondary" align="center">
+              No matching projects found.
+            </Typography>
+          )
         ) : (
-          <Typography variant="body2" color="text.secondary" align="center">
-            No matching projects found.
-          </Typography>
+          null
         )}
       </Box>
+
+      {projects.length >= 5 && showEnd && projects.length === filteredProjects.length && filteredProjects.length >= 5 && (
+        <Divider
+          sx={{
+            width: '100%',           // 占满容器宽度
+            maxWidth: 800,          
+            mx: 'auto',              // 水平居中
+            borderColor: '#e0e0e0',  
+            position: 'relative',
+            // 让中间文字“顶开”线
+            '&::before, &::after': {
+              borderTopWidth: 1,     // 线厚度
+              top: '50%',            // 垂直居中
+              transform: 'translateY(-50%)',
+            },
+            mt: -2,
+            pb: 2
+          }}
+        >
+          {/* 中间文字 */}
+          <Typography
+            component="span"
+            sx={{
+              px: 2.5,                // 左右内边距
+              py: 0.5,
+              fontWeight: 600,
+              fontSize: 14,
+              lineHeight: 1.2,
+              color: '#CACACA',
+            }}
+          >
+            I'm the end!
+          </Typography>
+        </Divider>
+      )}
+      
     </Box>
   );
 };
