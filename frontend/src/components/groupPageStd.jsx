@@ -1,5 +1,6 @@
 // GroupStd.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -23,6 +24,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import { styled, alpha } from '@mui/material/styles';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import TopBar from './Bar';
 import backendURL from '../backendURL';
@@ -35,12 +37,64 @@ export default function GroupStd() {
   const [groupName, setGroupName]     = useState('');
   const [memberInput, setMemberInput] = useState('');
   const [groupMembers, setGroupMembers] = useState([]);
-  const [snackbar, setSnackbar] = useState({
-    open: false, msg: '', severity: 'success',
+  const [snackbar, setSnackbar] = useState({open: false, msg: '', severity: 'success'});
+  const [currentLocation, setCurrentLocation] = useState(0);
+  const [myGroup, setMyGroup] = useState({
+    groupName: '',
+    groupMembers: {},
   });
+  const [loadingGroup, setLoadingGroup] = useState(false);
+
+  const navigate = useNavigate();
+
+  /* ───────────── fetch my group ───────────── */
+  const fetchmyGroup = async () => {
+    try {
+      setLoadingGroup(true);
+      const res = await fetch(`${backendURL}/api/student/group`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          "ngrok-skip-browser-warning": "true", // Ignore browser warning for ngrok
+        },
+      });
+      if (!res.ok) throw new Error(`Server responded ${res.status}`);
+      const data = await res.json();
+      if (data.grouped) {
+        localStorage.setItem('Grouped', data.grouped);
+        setMyGroup({
+          groupName: data.groupName,
+          groupMembers: data.groupMembers,
+        });
+        setCurrentLocation(1);
+      }
+    } catch (err) {
+      console.error(err);
+      setCurrentLocation(0);
+    } finally {
+      setLoadingGroup(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!localStorage.getItem('token')) {
+      navigate('/student/login');
+      return;
+    }
+    if (localStorage.getItem('Grouped') === 'true') {
+      setCurrentLocation(1);
+    }
+    fetchmyGroup();
+  }, []);
 
   /* ───────── helpers ───────── */
   const unsaved = groupName.trim() !== '' || groupMembers.length > 0;
+
+  const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   /* ───────── handlers ───────── */
   const handleOpenCreate   = () => setOpenCreate(true);
@@ -52,6 +106,14 @@ export default function GroupStd() {
 
   const handleAddMember = () => {
     const email = memberInput.trim();
+    if (!isValidEmail(email)) {
+      setSnackbar({ open: true, msg: 'Invalid email format!', severity: 'error' });
+      return;
+    }
+    if (groupMembers.length >= 5) {
+      setSnackbar({ open: true, msg: 'You can only add up to 5 members!', severity: 'warning' });
+      return;
+    }
     if (email && !groupMembers.includes(email)) {
       setGroupMembers(prev => [...prev, email]);
     }
@@ -68,11 +130,12 @@ export default function GroupStd() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({ groupName, groupMember: groupMembers }),
+        body: JSON.stringify({ groupName, groupMember: [...groupMembers, localStorage.getItem('email')] }),
       });
       if (!res.ok) throw new Error(`Server responded ${res.status}`);
       setSnackbar({ open: true, msg: 'Group created successfully!', severity: 'success' });
       handleCloseAll();
+      await fetchmyGroup();  // Refresh group list
     } catch (err) {
       console.error(err);
       setSnackbar({ open: true, msg: 'Failed to create group. Please try again later.', severity: 'error' });
@@ -101,67 +164,144 @@ export default function GroupStd() {
       <TopBar />
 
       {/* ---------- Hero section ---------- */}
-      <Box
-        sx={{
-          minHeight: 'calc(100vh - 64px)',         /* subtract AppBar height */
-          background:
-            'linear-gradient(135deg, #e3f2fd 0%, #ffe0f1 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          p: 3,
-        }}
-      >
-        {/* Glass-card */}
-        <Slide in direction="up" timeout={500}>
+      {currentLocation === 0 && (
+        <Box
+          sx={{
+            minHeight: 'calc(100vh - 64px)',         /* subtract AppBar height */
+            background:
+              'linear-gradient(135deg, #e3f2fd 0%, #ffe0f1 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 3,
+          }}
+        >
+          {/* Glass-card */}
+          <Slide in direction="up" timeout={500}>
+            <Paper
+              elevation={6}
+              sx={{
+                width: '100%', maxWidth: 520, p: 5,
+                textAlign: 'center',
+                borderRadius: 4,
+                // boxShadow: 'none',
+                backdropFilter: 'blur(10px)',
+                backgroundColor: 'rgba(255,255,255,0.65)',
+                // backgroundColor: 'transparent'
+              }}
+            >
+              <GroupsIcon sx={{ fontSize: 64, mb: 1, color: 'primary.main' }} />
+              <Typography variant="h4" fontWeight={700} gutterBottom>
+                Your Project Groups
+              </Typography>
+              <Typography variant="body1" color="text.secondary" mb={4}>
+                Organise classmates into groups, invite members by email,
+                and kick-start your collaboration in seconds.
+              </Typography>
+
+              {/* Empty-state illustration (if needed you can list existing groups here later) */}
+              <Stack
+                direction="row"
+                justifyContent="center"
+                spacing={1}
+                mb={3}
+                sx={{ opacity: 0.75 }}
+              >
+                <Typography variant="subtitle1">
+                  No groups yet?
+                </Typography>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Create one now!
+                </Typography>
+              </Stack>
+
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={<GroupAddIcon />}
+                onClick={handleOpenCreate}
+              >
+                Create Group
+              </Button>
+            </Paper>
+          </Slide>
+        </Box>
+      )}
+
+      {currentLocation === 1 && (
+        <Box
+          sx={{
+            minHeight: 'calc(100vh - 64px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'linear-gradient(135deg, #fefcea 0%, #f1daff 100%)',
+            p: 3,
+          }}
+        >
           <Paper
-            elevation={6}
+            elevation={8}
             sx={{
-              width: '100%', maxWidth: 520, p: 5,
-              textAlign: 'center',
+              maxWidth: 600,
+              width: '100%',
+              p: 4,
               borderRadius: 4,
-              // boxShadow: 'none',
+              backgroundColor: 'rgba(255, 255, 255, 0.75)',
               backdropFilter: 'blur(10px)',
-              backgroundColor: 'rgba(255,255,255,0.65)',
-              // backgroundColor: 'transparent'
+              textAlign: 'center',
             }}
           >
-            <GroupsIcon sx={{ fontSize: 64, mb: 1, color: 'primary.main' }} />
-            <Typography variant="h4" fontWeight={700} gutterBottom>
-              Your Project Groups
+            <GroupsIcon sx={{ fontSize: 50, color: 'primary.main', mb: 1 }} />
+            <Typography variant="h4" fontWeight={700} mb={1}>
+              {myGroup.groupName || 'My Group'}
             </Typography>
-            <Typography variant="body1" color="text.secondary" mb={4}>
-              Organise classmates into groups, invite members by email,
-              and kick-start your collaboration in seconds.
+            <Typography variant="body1" color="text.secondary" mb={3}>
+              You are now part of a project group. Here's your team:
             </Typography>
 
-            {/* Empty-state illustration (if needed you can list existing groups here later) */}
-            <Stack
-              direction="row"
-              justifyContent="center"
-              spacing={1}
-              mb={3}
-              sx={{ opacity: 0.75 }}
-            >
-              <Typography variant="subtitle1">
-                No groups yet?
-              </Typography>
-              <Typography variant="subtitle1" fontWeight={600}>
-                Create one now!
-              </Typography>
-            </Stack>
+            {loadingGroup ? (
+              <Box sx={{ my: 3 }}>
+                <CircularProgress color="primary" />
+              </Box>
+            ) : (
+              <Stack
+                direction="row"
+                flexWrap="wrap"
+                justifyContent="center"
+                spacing={1}
+                useFlexGap
+                mb={3}
+              >
+                {Object.entries(myGroup.groupMembers).map(([email, name]) => (
+                  <Chip
+                    key={email}
+                    label={`${name} (${email})`}
+                    sx={{ mb: 1 }}
+                    color="secondary"
+                    variant="outlined"
+                  />
+                ))}
+              </Stack>
+            )}
 
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<GroupAddIcon />}
-              onClick={handleOpenCreate}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'text.secondary',
+                mt: 2,
+              }}
             >
-              Create Group
-            </Button>
+              <InfoOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
+              <Typography variant="body2">
+                You cannot change group members after joining.
+              </Typography>
+            </Box>
           </Paper>
-        </Slide>
-      </Box>
+        </Box>
+      )}
+
 
       {/* ============ Create Group Dialog ============ */}
       <Dialog 
@@ -204,6 +344,7 @@ export default function GroupStd() {
                 fullWidth
                 value={memberInput}
                 onChange={(e) => setMemberInput(e.target.value)}
+                type="email"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -211,7 +352,7 @@ export default function GroupStd() {
                   }
                 }}
               />
-              <Button onClick={handleAddMember}>Add</Button>
+              <Button onClick={handleAddMember} disabled={!isValidEmail(memberInput) || groupMembers.length >= 5}>Add</Button>
             </Stack>
             {groupMembers.length > 0 && (
               <Box>
@@ -234,7 +375,7 @@ export default function GroupStd() {
           <Button variant="outlined" color="error" onClick={handleCancelCreate}>Cancel</Button>
           <Button
             variant="contained"
-            disabled={!groupName.trim()}
+            disabled={!groupName.trim() || groupMembers.length === 0 || groupMembers.length < 5}
             onClick={() => setOpenConfirm(true)}
             endIcon={<CheckCircleOutlineIcon />}
           >
