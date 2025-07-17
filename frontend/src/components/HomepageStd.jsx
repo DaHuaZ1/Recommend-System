@@ -22,16 +22,15 @@ const HomeStd = () => {
 
   // 点击搜索图标的回调
   const handleSearch = (searchTerm) => {
-    console.log('Search:', searchTerm);
-    const lowerKeyword = searchTerm.toLowerCase().trim();
+    const lowerKeyword = searchTerm.toLowerCase().trim().replace(/\s+/g, '');
     if (lowerKeyword === '') {
       setFilteredProjects(projects); // 为空时展示所有项目
       return;
     }
 
     const results = projects.filter((project) => {
-      const title = project.projectTitle?.toLowerCase() || '';
-      const number = project.projectNumber?.toLowerCase() || '';
+      const title = project.projectTitle.toLowerCase().replace(/\s+/g, '');
+      const number = project.projectNumber.toLowerCase().replace(/\s+/g, '');
       return title.includes(lowerKeyword) || number.includes(lowerKeyword);
     });
     setFilteredProjects(results);
