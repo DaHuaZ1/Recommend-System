@@ -86,6 +86,7 @@ export default function GroupStd() {
       setCurrentLocation(1);
     }
     fetchmyGroup();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /* ───────── helpers ───────── */
