@@ -15,13 +15,25 @@ import backendURL from '../backendURL';
 const HomeStd = () => {
   const [keyword, setKeyword] = useState('');
   const [projects, setProjects] = useState([]);
+  const [filteredProjects, setFilteredProjects] = useState([]);
+
   const navigate = useNavigate();
 
   // 点击搜索图标的回调
-  const handleSearch = () => {
-    console.log('Search:', keyword);
-    // TODO: 替换为真正的搜索逻辑
-    // 直接匹配现有的项目列表的标题或描述
+  const handleSearch = (searchTerm) => {
+    console.log('Search:', searchTerm);
+    const lowerKeyword = searchTerm.toLowerCase().trim();
+    if (lowerKeyword === '') {
+      setFilteredProjects(projects); // 为空时展示所有项目
+      return;
+    }
+
+    const results = projects.filter((project) => {
+      const title = project.projectTitle?.toLowerCase() || '';
+      const number = project.projectNumber?.toLowerCase() || '';
+      return title.includes(lowerKeyword) || number.includes(lowerKeyword);
+    });
+    setFilteredProjects(results);
   };
 
   // fetch所有项目列表的函数
@@ -39,7 +51,9 @@ const HomeStd = () => {
         throw new Error('Network response was not ok');
       }
       const data = await res.json();
-      setProjects(data.projects || []);
+      const all = data.projects || [];
+      setProjects(all);
+      setFilteredProjects(all); // 初始化时显示所有项目
     } catch (error) {
       console.error('Error fetching projects:', error);
     } 
@@ -99,11 +113,14 @@ const HomeStd = () => {
             sx={{ ml: 1, flex: 1, fontWeight: 550 }}
             placeholder="Search projects…"
             value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            onChange={(e) => {
+              setKeyword(e.target.value); 
+              handleSearch(e.target.value);
+            }}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch(e.target.value)}
             inputProps={{ 'aria-label': 'search projects' }}
           />
-          <IconButton sx={{ p: 0.5 }} onClick={handleSearch} aria-label="search">
+          <IconButton sx={{ p: 0.5 }} onClick={() => handleSearch(keyword)} aria-label="search">
             <SearchIcon sx={{ color: '#ff9500' }} />
           </IconButton>
         </Paper>
@@ -144,9 +161,15 @@ const HomeStd = () => {
 
       {/* 项目列表 */}
       <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-        {projects.length > 0 && projects.map((project, index) => (
-          <ProjectSingle key={index} project={project} />
-        ))}
+        {filteredProjects.length > 0 ? (
+          filteredProjects.map((project, index) => (
+            <ProjectSingle key={index} project={project} />
+          ))
+        ) : (
+          <Typography variant="body2" color="text.secondary" align="center">
+            No matching projects found.
+          </Typography>
+        )}
       </Box>
     </Box>
   );
