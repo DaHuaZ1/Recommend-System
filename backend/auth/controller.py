@@ -3,6 +3,7 @@ from auth.service import AuthService
 from utils.jwt_utils import generate_token, token_required, teacher_required, student_required
 from utils.resume_utils import parse_resume
 from models.student_resume import StudentResume
+from models.group import GroupMember
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -89,6 +90,15 @@ def login():
             resume:
               type: boolean
               description: 仅学生登录时返回，表示是否已上传简历
+            grouped:
+              type: boolean
+              description: 仅学生登录时返回，表示是否已加入分组
+              example: true
+        examples:
+          application/json:
+            token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            resume: true
+            grouped: true
       400:
         description: 参数错误
       401:
@@ -110,7 +120,9 @@ def login():
             token, user_type, user = result
             if user_type == 'student':
                 has_resume = StudentResume.query.filter_by(user_id=user['id']).first() is not None
-                return jsonify({'token': token, 'resume': has_resume}), 200
+                # 查询该学生是否已加入分组
+                grouped = GroupMember.query.filter_by(user_id=user['id']).first() is not None
+                return jsonify({'token': token, 'resume': has_resume, 'grouped': grouped}), 200
             else:
                 return jsonify({'token': token}), 200
         else:

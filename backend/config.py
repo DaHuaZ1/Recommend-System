@@ -1,5 +1,6 @@
 # 导入操作系统模块，用于读取环境变量
 import os
+import traceback
 
 class Config:
     """
@@ -35,7 +36,7 @@ class Config:
     # ==================== JWT配置 ====================
     # JWT签名密钥，用于生成和验证token
     # 在生产环境中必须设置一个强密钥
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key')
     
     # JWT token的过期时间（小时）
     JWT_EXPIRATION_HOURS = 24
