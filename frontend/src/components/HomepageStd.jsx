@@ -51,7 +51,9 @@ const HomeStd = () => {
         throw new Error('Network response was not ok');
       }
       const data = await res.json();
-      const all = data.projects || [];
+      const all = (data.projects || []).sort((a, b) => {
+        return parseInt(a.projectNumber) - parseInt(b.projectNumber);
+      });
       setProjects(all);
       setFilteredProjects(all); // 初始化时显示所有项目
     } catch (error) {
