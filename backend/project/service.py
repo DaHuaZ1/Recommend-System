@@ -44,13 +44,9 @@ def save_projects_from_files(files, upload_dir):
 
 def update_project_from_info(info):
     """
-    根据 projectNumber 更新项目信息，不更新 pdf_file。
-    Args:
-        info: dict, 包含项目信息
-    Returns:
-        Project 实例
+    根据 projectNumber 更新项目信息，不存在则新建。
     """
-    return project_dao.update_project_by_number(info)
+    return project_dao.upsert_project_by_number(info)
 
 def delete_project_by_number(project_number):
     """

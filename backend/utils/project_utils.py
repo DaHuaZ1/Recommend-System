@@ -70,7 +70,7 @@ def parse_project_pdf(file_path, filename):
         text = extract_text_from_docx(file_path)
     else:
         text = ''
-    print(f"[DEBUG] 原始PDF文本内容:\n{text}", flush=True)
+    # print(f"[DEBUG] 原始PDF文本内容:\n{text}", flush=True)
 
     # 先提取 Project ID
     project_number = extract_project_id(text) or os.path.splitext(filename)[0]

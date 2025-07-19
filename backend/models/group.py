@@ -15,3 +15,4 @@ class GroupMember(db.Model):
     user_id = db.Column(db.Integer, nullable=False, unique=True)  # 一个成员只能加入一个组
     name = db.Column(db.String(128), nullable=False)
     email = db.Column(db.String(128), nullable=False) 
+    skill = db.Column(db.Text, nullable=True) 

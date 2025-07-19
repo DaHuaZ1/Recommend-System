@@ -15,7 +15,7 @@ def save_resume_file(file, filename):
 
 def save_resume_to_db(user_id, name, email, major, skill):
     """
-    保存或更新学生简历信息
+    保存或更新学生简历信息，并同步 group_members 表的 skill 字段
     Args:
         user_id: 用户ID
         name: 姓名
@@ -42,8 +42,11 @@ def save_resume_to_db(user_id, name, email, major, skill):
             skill=skill
         )
         db.session.add(resume)
-    
-    # 提交更改
+    # 同步 group_members 表
+    from models.group import GroupMember
+    group_members = GroupMember.query.filter_by(user_id=user_id).all()
+    for member in group_members:
+        member.skill = skill
     db.session.commit()
 
 # 新增：查询学生简历

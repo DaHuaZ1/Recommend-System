@@ -51,13 +51,13 @@ def save_project_to_db(project_info, pdf_file):
     db.session.commit()
     return project
 
-def update_project_by_number(info):
+def upsert_project_by_number(info):
     """
-    根据 projectNumber 更新项目信息（不更新 pdf_file），若不存在则不做任何操作。
+    根据 projectNumber 更新项目信息（不更新 pdf_file），若不存在则新建。
     Args:
         info: dict, 包含项目信息
     Returns:
-        Project 实例或 None
+        Project 实例
     """
     project = Project.query.filter_by(project_number=info['projectNumber']).first()
     if project:
@@ -66,9 +66,19 @@ def update_project_by_number(info):
         project.group_capacity = info['groupCapacity']
         project.project_requirements = info['projectRequirements']
         project.required_skills = info['requiredSkills']
-        db.session.commit()
-        return project
-    return None
+    else:
+        project = Project(
+            project_number=info['projectNumber'],
+            project_title=info['projectTitle'],
+            client_name=info['clientName'],
+            group_capacity=info['groupCapacity'],
+            project_requirements=info['projectRequirements'],
+            required_skills=info['requiredSkills'],
+            pdf_file=info.get('pdfFile', None)
+        )
+        db.session.add(project)
+    db.session.commit()
+    return project
 
 def delete_project_by_number(project_number):
     """
