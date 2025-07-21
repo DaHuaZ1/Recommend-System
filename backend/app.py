@@ -11,6 +11,7 @@ from models import group
 from models import project
 from group.controller import group_bp
 from project.controller import project_bp
+from recommend.controller import recommend_bp
 
 
 def create_app():
@@ -39,6 +40,7 @@ def create_app():
     app.register_blueprint(resume_bp, url_prefix='/api')
     app.register_blueprint(group_bp, url_prefix='/api')
     app.register_blueprint(project_bp, url_prefix='/api')
+    app.register_blueprint(recommend_bp, url_prefix='/api')
 
     # 在应用上下文中创建数据库表
     # 如果表不存在，会自动创建

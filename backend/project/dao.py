@@ -66,6 +66,7 @@ def upsert_project_by_number(info):
         project.group_capacity = info['groupCapacity']
         project.project_requirements = info['projectRequirements']
         project.required_skills = info['requiredSkills']
+        project.pdf_file = info.get('pdfFile', project.pdf_file)
     else:
         project = Project(
             project_number=info['projectNumber'],
@@ -94,4 +95,11 @@ def delete_project_by_number(project_number):
         db.session.delete(project)
         db.session.commit()
         return True
-    return False 
+    return False
+
+def get_project_by_number(project_number):
+    """
+    根据 project_number 查询单个项目
+    Returns: Project 实例或 None
+    """
+    return Project.query.filter_by(project_number=project_number).first() 

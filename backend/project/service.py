@@ -56,4 +56,10 @@ def delete_project_by_number(project_number):
     Returns:
         bool: 删除成功返回 True，否则 False
     """
-    return project_dao.delete_project_by_number(project_number) 
+    return project_dao.delete_project_by_number(project_number)
+
+def get_project_by_number(project_number):
+    """
+    根据 project_number 查询单个项目
+    """
+    return project_dao.get_project_by_number(project_number) 

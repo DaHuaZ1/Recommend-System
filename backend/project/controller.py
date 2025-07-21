@@ -64,6 +64,8 @@ def upload_staff_projects():
                     type: string
                   requiredSkills:
                     type: string
+                  pdfFile:
+                    type: string
       400:
         description: 参数错误
       401:
@@ -88,6 +90,9 @@ def upload_staff_projects():
         file.save(file_path)
         from utils.project_utils import parse_project_pdf
         info = parse_project_pdf(file_path, filename)
+        # 增加pdfFile字段，返回API路径
+        api_path = f"/api/files/project/{filename}"
+        info['pdfFile'] = api_path
         projects.append(info)
     return jsonify({'status': '200', 'projects': projects})
 
@@ -139,6 +144,8 @@ def update_staff_projects():
                     type: string
                   requiredSkills:
                     type: string
+                  pdfFile:
+                    type: string
       400:
         description: 请求参数错误
       401:
@@ -161,7 +168,7 @@ def update_staff_projects():
         return jsonify({'error': f'projects 字段不是合法 JSON: {e}'}), 400
     updated_projects = []
     for info in projects_data:
-        # 这里假设 pdf_file 不更新
+        # 支持pdfFile字段写入
         from . import service as project_service
         project = project_service.update_project_from_info(info)
         updated_projects.append({
@@ -171,6 +178,7 @@ def update_staff_projects():
             'groupCapacity': project.group_capacity,
             'projectRequirements': project.project_requirements,
             'requiredSkills': project.required_skills,
+            'pdfFile': project.pdf_file,
         })
     return jsonify({'status': '200', 'projects': updated_projects})
 
@@ -309,6 +317,81 @@ def get_projects():
     return jsonify({
         'status': '200',
         'projects': projects
+    })
+
+
+@project_bp.route('/project/<int:projectNumber>', methods=['GET'])
+def get_project_by_number(projectNumber):
+    """
+    获取单个项目详情
+    ---
+    tags:
+      - 项目
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+        description: Bearer token
+      - name: projectNumber
+        in: path
+        type: integer
+        required: true
+        description: 项目编号
+    responses:
+      200:
+        description: 获取成功
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: "200"
+            projectNumber:
+              type: integer
+              example: 1
+            projectTitle:
+              type: string
+              example: "xxxxx"
+            clientName:
+              type: string
+              example: "xxxx"
+            groupCapacity:
+              type: integer
+              example: 3
+            projectRequirements:
+              type: string
+              example: "xxxx"
+            requiredSkills:
+              type: string
+              example: "xxx"
+            pdfFile:
+              type: string
+              example: "/api/files/project/xxx.pdf"
+      401:
+        description: 未授权或token无效
+      404:
+        description: 项目不存在
+    """
+    token = get_token_from_header()
+    if not token:
+        return jsonify({'error': '未授权'}), 401
+    payload = verify_token(token)
+    if not payload:
+        return jsonify({'error': 'token无效'}), 401
+    from . import service as project_service
+    project = project_service.get_project_by_number(projectNumber)
+    if not project:
+        return jsonify({'error': '项目不存在'}), 404
+    return jsonify({
+        'status': '200',
+        'projectNumber': project.project_number,
+        'projectTitle': project.project_title,
+        'clientName': project.client_name,
+        'groupCapacity': project.group_capacity,
+        'projectRequirements': project.project_requirements,
+        'requiredSkills': project.required_skills,
+        'pdfFile': project.pdf_file
     })
 
 
