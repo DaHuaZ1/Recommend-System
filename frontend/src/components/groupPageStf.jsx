@@ -10,6 +10,8 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
+    DialogActions,
+    Button,
     IconButton
 } from '@mui/material';
 import GroupsIcon from '@mui/icons-material/Groups';
@@ -22,6 +24,9 @@ export default function GroupStf() {
     const [loading, setLoading] = useState(false);
     const [expanded, setExpanded] = useState(null);
     const [selectedMember, setSelectedMember] = useState(null);
+    const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+    const [projectDetails, setProjectDetails] = useState(null);
+    const [projectLoading, setProjectLoading] = useState(false);
     const navigate = useNavigate();
 
     const fetchGroups = async () => {
@@ -50,14 +55,53 @@ export default function GroupStf() {
         }
     };
 
+    const handleToggle = (name) => setExpanded(expanded === name ? null : name);
+    const handleOpenMember = (member) => setSelectedMember(member);
+    const handleCloseMember = () => setSelectedMember(null);
+
+    const handleOpenProject = async (projectNumber, e) => {
+        e.stopPropagation();
+        setProjectLoading(true);
+        try {
+            const res = await fetch(`${backendURL}/api/project/${projectNumber}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'ngrok-skip-browser-warning': 'true',
+                },
+            });
+            if (res.status === 401) return navigate('/staff/login');
+            if (!res.ok) {
+                console.error('Error fetching project:', await res.text());
+                return;
+            }
+            const data = await res.json();
+            setProjectDetails(data);
+            setProjectDialogOpen(true);
+        } catch (err) {
+            console.error('Fetch project failed:', err);
+        } finally {
+            setProjectLoading(false);
+        }
+    };
+
+    const handleCloseProject = () => {
+        setProjectDialogOpen(false);
+        setProjectDetails(null);
+    };
+
+    const handleDownload = () => {
+        if (project.pdfFile) {
+            window.open(backendURL + project.pdfFile, "_blank");
+        }
+    };
+
     useEffect(() => {
         if (!localStorage.getItem('token')) return navigate('/staff/login');
         fetchGroups();
     }, [navigate]);
-
-    const handleToggle = (name) => setExpanded(expanded === name ? null : name);
-    const handleOpenMember = (member) => setSelectedMember(member);
-    const handleCloseMember = () => setSelectedMember(null);
 
     return (
         <>
@@ -124,8 +168,7 @@ export default function GroupStf() {
                                                         color="secondary"
                                                         clickable
                                                         onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleOpenMember(m);
+                                                            e.stopPropagation(); handleOpenMember(m);
                                                         }}
                                                     />
                                                 ))}
@@ -139,7 +182,22 @@ export default function GroupStf() {
                                             <Stack spacing={1} justifyContent="center">
                                                 {(group.recommendProjects || []).map((p) => (
                                                     <Typography key={p.projectNumber} variant="body2">
-                                                        {p.rank}. {p.projectTitle} (Score: {p.final_score})
+                                                        {p.rank}.{' '}
+                                                        <Box
+                                                            component="span"
+                                                            sx={{
+                                                                cursor: 'pointer',
+                                                                textDecoration: 'underline',
+                                                                color: 'primary.main'
+                                                            }}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleOpenProject(p.projectNumber, e);
+                                                            }}
+                                                        >
+                                                            {p.projectTitle}
+                                                        </Box>
+                                                        {` (Score: ${p.final_score})`}
                                                     </Typography>
                                                 ))}
                                             </Stack>
@@ -159,11 +217,7 @@ export default function GroupStf() {
                     <IconButton
                         aria-label="close"
                         onClick={handleCloseMember}
-                        sx={{
-                            position: 'absolute',
-                            right: 8,
-                            top: 8,
-                        }}
+                        sx={{ position: 'absolute', right: 8, top: 8 }}
                     >
                         <CloseIcon />
                     </IconButton>
@@ -179,6 +233,44 @@ export default function GroupStf() {
                         </Stack>
                     )}
                 </DialogContent>
+            </Dialog>
+
+            {/* Project details dialog */}
+            <Dialog open={projectDialogOpen} onClose={handleCloseProject} fullWidth maxWidth="sm">
+                <DialogTitle sx={{ m: 0, p: 2, position: 'relative' }}>
+                    Project Details
+                    <IconButton
+                        aria-label="close"
+                        onClick={handleCloseProject}
+                        sx={{ position: 'absolute', right: 8, top: 8 }}
+                    >
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent dividers>
+                    {projectLoading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : (
+                        projectDetails && (
+                            <Stack spacing={2}>
+                                <Typography><strong>Title:</strong> {projectDetails.projectTitle}</Typography>
+                                <Typography><strong>Number:</strong> {projectDetails.projectNumber}</Typography>
+                                <Typography><strong>Client:</strong> {projectDetails.clientName}</Typography>
+                                <Typography><strong>Capacity:</strong> {projectDetails.groupCapacity}</Typography>
+                                <Typography><strong>Requirements:</strong> {projectDetails.projectRequirements}</Typography>
+                                <Typography><strong>Required Skills:</strong> {projectDetails.requiredSkills}</Typography>
+                            </Stack>
+                        )
+                    )}
+                </DialogContent>
+
+                <DialogActions sx={{ justifyContent: "center", py: 2 }}>
+                    <Button variant="contained" onClick={handleDownload}>
+                        Download PDF
+                    </Button>
+                </DialogActions>
             </Dialog>
         </>
     );
