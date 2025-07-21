@@ -219,7 +219,7 @@ class RecommendService:
         project_ids = []
         for project in projects:
             skill_dict = analyze_skill_strength(project.required_skills or "")
-            if len(skill_dict) < 5:
+            if len(skill_dict) < 3:
                 continue  # 忽略技能太少的项目
             vector = [skill_dict.get(skill, 0) for skill in all_skills]
             project_vectors.append(vector)
