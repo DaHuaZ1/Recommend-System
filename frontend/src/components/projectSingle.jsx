@@ -1,34 +1,46 @@
 import React, { useState } from "react";
-import Paper from "@mui/material/Paper";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Dialog from "@mui/material/Dialog";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogActions from "@mui/material/DialogActions";
-import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
+// MUI
+import {
+  CircularProgress,
+  Paper,
+  Box,
+  Typography,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogActions,
+  Button,
+  IconButton
+} from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-
+import { useLocation } from "react-router-dom"; // 新增
+// utils
 import backendURL from "../backendURL";
 
-export default function ProjectSingle({project}) {
+export default function ProjectSingle({ project }) {
   const [open, setOpen] = useState(false);
+  const { pathname } = useLocation(); // 获取当前路径
 
-  /* ---------- 打开/关闭弹窗 ---------- */
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  /* ---------- 下载按钮回调（示例） ---------- */
   const handleDownload = () => {
     if (project.pdfFile) {
-      window.open(backendURL+project.pdfFile, "_blank");
+      window.open(backendURL + project.pdfFile, "_blank");
     }
   };
 
+  const rawScore = parseFloat(project?.final_score);
+  const percentage = Number.isFinite(rawScore)
+    ? Math.round(rawScore * 100)
+    : 0;
+
+  // choose color based on score
+  const ringColor =
+    percentage >= 75 ? "success.main" : percentage >= 50 ? "info.main" : "warning.main";
+
   return (
     <>
-      {/* ---- 项目卡片 ---- */}
       <Paper
         elevation={3}
         onClick={handleOpen}
@@ -44,32 +56,74 @@ export default function ProjectSingle({project}) {
           "&:hover": { bgcolor: "#eaf0ff" }
         }}
       >
-        {/* 左侧文字 */}
         <Box sx={{ flexGrow: 1 }}>
           <Typography variant="h6" fontWeight={700}>
-            {"Project "+ project.projectNumber || "Project"}
+            {`Project ${project.projectNumber ?? ""}`}
           </Typography>
-          <Typography color="text.secondary" sx={{ 
-            maxWidth: "600px",
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}>
+          <Typography
+            color="text.secondary"
+            sx={{
+              maxWidth: "600px",
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
+          >
             {project.projectTitle || "Project Title"}
           </Typography>
         </Box>
+
+        {/* 仅在 /student/group/recommend 页面显示进度环 */}
+        {pathname === "/student/group/recommend" && (
+          <Box sx={{ position: "relative", width: 60, height: 60, mr: 2.5, flexShrink: 0 }}>
+            {/* Background track */}
+            <CircularProgress
+              variant="determinate"
+              value={100}
+              size={60}
+              thickness={4}
+              sx={{ color: 'grey.300', position: 'absolute', top: 0, left: 0 }}
+            />
+            {/* Animated foreground */}
+            <CircularProgress
+              variant="determinate"
+              value={percentage}
+              size={60}
+              thickness={4}
+              sx={{
+                color: ringColor,
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                transform: 'rotate(-90deg)',
+                transition: 'all 0.5s ease-out',
+                '& .MuiCircularProgress-circle': {
+                  strokeLinecap: 'round'
+                }
+              }}
+            />
+            {/* Percentage label */}
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              <Typography variant="subtitle2" fontWeight={700} color={ringColor}>
+                {`${percentage}%`}
+              </Typography>
+            </Box>
+          </Box>
+        )}
       </Paper>
 
-      {/* ---- 弹窗 ---- */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        {/* 关闭按钮 */}
         <IconButton
           onClick={handleClose}
-          sx={{
-            position: "absolute",
-            right: 8,
-            top: 8
-          }}
+          sx={{ position: "absolute", right: 8, top: 8 }}
         >
           <CloseIcon />
         </IconButton>
@@ -77,7 +131,6 @@ export default function ProjectSingle({project}) {
         <DialogTitle fontWeight={700}>{project.title}</DialogTitle>
 
         <DialogContent dividers>
-          {/* block display = 默认纵向排列 */}
           <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle1" fontWeight={600}>
               Title
@@ -133,10 +186,7 @@ export default function ProjectSingle({project}) {
           </Box>
         </DialogContent>
 
-        {/* 底部 Download 按钮（居中） */}
-        <DialogActions
-          sx={{ justifyContent: "center", py: 2 }}
-        >
+        <DialogActions sx={{ justifyContent: "center", py: 2 }}>
           <Button variant="contained" onClick={handleDownload}>
             Download PDF
           </Button>
