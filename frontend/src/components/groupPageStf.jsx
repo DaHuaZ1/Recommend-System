@@ -1,291 +1,185 @@
-// GroupStd.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-    Alert,
     Box,
-    Button,
-    Chip,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    IconButton,
     Paper,
-    Snackbar,
-    Stack,
-    TextField,
+    Chip,
     Typography,
-    Slide
+    Stack,
+    CircularProgress,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    IconButton
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import GroupsIcon from '@mui/icons-material/Groups';
-import { styled, alpha } from '@mui/material/styles';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-
+import CloseIcon from '@mui/icons-material/Close';
 import TopBar from './BarStf';
 import backendURL from '../backendURL';
 
-export default function GroupStd() {
-    /* ───────────── state ───────────── */
-    const [openCreate, setOpenCreate] = useState(false);
-    const [openDiscard, setOpenDiscard] = useState(false);
-    const [openConfirm, setOpenConfirm] = useState(false);
-    const [groupName, setGroupName] = useState('');
-    const [memberInput, setMemberInput] = useState('');
-    const [groupMembers, setGroupMembers] = useState([]);
-    const [snackbar, setSnackbar] = useState({
-        open: false, msg: '', severity: 'success',
-    });
+export default function GroupStf() {
+    const [groups, setGroups] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [expanded, setExpanded] = useState(null);
+    const [selectedMember, setSelectedMember] = useState(null);
+    const navigate = useNavigate();
 
-    /* ───────── helpers ───────── */
-    const unsaved = groupName.trim() !== '' || groupMembers.length > 0;
-
-    /* ───────── handlers ───────── */
-    const handleOpenCreate = () => setOpenCreate(true);
-    const handleCancelCreate = () => (unsaved ? setOpenDiscard(true) : handleCloseAll());
-    const handleCloseAll = () => {
-        setOpenCreate(false); setOpenDiscard(false); setOpenConfirm(false);
-        setGroupName(''); setMemberInput(''); setGroupMembers([]);
-    };
-
-    const handleAddMember = () => {
-        const email = memberInput.trim();
-        if (email && !groupMembers.includes(email)) {
-            setGroupMembers(prev => [...prev, email]);
-        }
-        setMemberInput('');
-    };
-    const handleDeleteMember = (email) =>
-        setGroupMembers(prev => prev.filter(e => e !== email));
-
-    const createGroup = async () => {
+    const fetchGroups = async () => {
+        setLoading(true);
         try {
-            const res = await fetch(`${backendURL}/api/student/group`, {
-                method: 'POST',
+            const res = await fetch(`${backendURL}/api/staff/groups`, {
+                method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'ngrok-skip-browser-warning': 'true',
                 },
-                body: JSON.stringify({ groupName, groupMember: groupMembers }),
             });
-            if (!res.ok) throw new Error(`Server responded ${res.status}`);
-            setSnackbar({ open: true, msg: 'Group created successfully!', severity: 'success' });
-            handleCloseAll();
+            if (res.status === 401) return navigate('/staff/login');
+            if (!res.ok) {
+                console.error('Error fetching groups:', await res.text());
+                return;
+            }
+            const data = await res.json();
+            setGroups(Array.isArray(data.groups) ? data.groups : []);
         } catch (err) {
-            console.error(err);
-            setSnackbar({ open: true, msg: 'Failed to create group. Please try again later.', severity: 'error' });
-            setOpenConfirm(false);
+            console.error('Fetch groups failed:', err);
+        } finally {
+            setLoading(false);
         }
     };
 
-    /* ──────────── Styled Components ──────────── */
-    const FrostDialog = styled(Dialog)(({ theme }) => ({
-        '& .MuiPaper-root': {
-            borderRadius: 16,
-            padding: theme.spacing(3),
-            background: 'rgba(255,255,255,0.82)',
-            backdropFilter: 'blur(15px)',
-            boxShadow: '0 12px 36px rgba(0,0,0,0.18)',
-            border: `1px solid ${alpha(theme.palette.divider, 0.25)}`,
-        },
-    }));
-    const UpTransition = React.forwardRef(function UpTransition(props, ref) {
-        return <Slide direction="up" ref={ref} {...props} />;
-    });
+    useEffect(() => {
+        if (!localStorage.getItem('token')) return navigate('/staff/login');
+        fetchGroups();
+    }, [navigate]);
 
-    /* ──────────── UI ──────────── */
+    const handleToggle = (name) => setExpanded(expanded === name ? null : name);
+    const handleOpenMember = (member) => setSelectedMember(member);
+    const handleCloseMember = () => setSelectedMember(null);
+
     return (
         <>
             <TopBar />
-
-            {/* ---------- Hero section ---------- */}
             <Box
                 sx={{
-                    minHeight: 'calc(100vh - 64px)',         /* subtract AppBar height */
-                    background:
-                        'linear-gradient(135deg, #e3f2fd 0%, #ffe0f1 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    minHeight: 'calc(100vh - 64px)',
                     p: 3,
+                    background: 'linear-gradient(135deg, #e3f2fd 0%, #ffe0f1 100%)',
                 }}
             >
-                {/* Glass-card */}
-                <Slide in direction="up" timeout={500}>
-                    <Paper
-                        elevation={6}
-                        sx={{
-                            width: '100%', maxWidth: 520, p: 5,
-                            textAlign: 'center',
-                            borderRadius: 4,
-                            // boxShadow: 'none',
-                            backdropFilter: 'blur(10px)',
-                            backgroundColor: 'rgba(255,255,255,0.65)',
-                            // backgroundColor: 'transparent'
-                        }}
-                    >
-                        <GroupsIcon sx={{ fontSize: 64, mb: 1, color: 'primary.main' }} />
-                        <Typography variant="h4" fontWeight={700} gutterBottom>
-                            Your Project Groups
-                        </Typography>
-                        <Typography variant="body1" color="text.secondary" mb={4}>
-                            Organise classmates into groups, invite members by email,
-                            and kick-start your collaboration in seconds.
-                        </Typography>
-
-                        {/* Empty-state illustration (if needed you can list existing groups here later) */}
-                        <Stack
-                            direction="row"
-                            justifyContent="center"
-                            spacing={1}
-                            mb={3}
-                            sx={{ opacity: 0.75 }}
-                        >
-                            <Typography variant="subtitle1">
-                                No groups yet?
-                            </Typography>
-                            <Typography variant="subtitle1" fontWeight={600}>
-                                Create one now!
-                            </Typography>
-                        </Stack>
-
-                        <Button
-                            variant="contained"
-                            size="large"
-                            startIcon={<GroupAddIcon />}
-                            onClick={handleOpenCreate}
-                        >
-                            Create Group
-                        </Button>
-                    </Paper>
-                </Slide>
+                {loading ? (
+                    <Box sx={{ mt: 6, display: 'flex', justifyContent: 'center' }}>
+                        <CircularProgress color="primary" />
+                    </Box>
+                ) : (
+                    <Stack spacing={3} alignItems="center">
+                        {groups.map((group) => {
+                            const isOpen = expanded === group.groupName;
+                            return (
+                                <Paper
+                                    key={group.groupName}
+                                    onClick={() => handleToggle(group.groupName)}
+                                    elevation={6}
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        flexDirection: 'column',
+                                        justifyContent: 'center',
+                                        width: '100%',
+                                        maxWidth: 520,
+                                        minHeight: 360,
+                                        p: 5,
+                                        borderRadius: 4,
+                                        backdropFilter: 'blur(10px)',
+                                        backgroundColor: 'rgba(255,255,255,0.65)',
+                                        textAlign: 'center',
+                                        cursor: 'pointer',
+                                        transition: 'box-shadow 0.3s ease, transform 0.2s ease',
+                                        '&:hover': {
+                                            boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                                            transform: 'translateY(-4px)',
+                                        },
+                                        border: isOpen ? '2px solid #3f51b5' : 'none',
+                                    }}
+                                >
+                                    {!isOpen ? (
+                                        <>
+                                            <GroupsIcon sx={{ fontSize: 64, mb: 1, color: 'primary.main' }} />
+                                            <Typography variant="h5" fontWeight={700} gutterBottom>
+                                                {group.groupName}
+                                            </Typography>
+                                            <Stack
+                                                direction="row"
+                                                flexWrap="wrap"
+                                                justifyContent="center"
+                                                gap={1}
+                                            >
+                                                {(group.groupMembers || []).map((m) => (
+                                                    <Chip
+                                                        key={m.email}
+                                                        label={`${m.name} (${m.email})`}
+                                                        variant="outlined"
+                                                        color="secondary"
+                                                        clickable
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleOpenMember(m);
+                                                        }}
+                                                    />
+                                                ))}
+                                            </Stack>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Typography variant="body2" color="text.secondary" mb={1}>
+                                                Recommended Projects:
+                                            </Typography>
+                                            <Stack spacing={1} justifyContent="center">
+                                                {(group.recommendProjects || []).map((p) => (
+                                                    <Typography key={p.projectNumber} variant="body2">
+                                                        {p.rank}. {p.projectTitle} (Score: {p.final_score})
+                                                    </Typography>
+                                                ))}
+                                            </Stack>
+                                        </>
+                                    )}
+                                </Paper>
+                            );
+                        })}
+                    </Stack>
+                )}
             </Box>
 
-            {/* ============ Create Group Dialog ============ */}
-            <Dialog
-                open={openCreate}
-                onClose={handleCancelCreate}
-                fullWidth
-                maxWidth="sm"
-                slotProps={{
-                    paper: {
-                        sx: {
-                            pl: 3, pr: 3, pt: 2, pb: 2,
-                            borderRadius: 5,
-                        },
-                    }
-                }}
-            >
-                <DialogTitle sx={{ pr: 5, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <GroupAddIcon color="primary" />
-                    <Typography variant="h6" component="span">Create a New Group</Typography>
+            {/* Member details dialog */}
+            <Dialog open={!!selectedMember} onClose={handleCloseMember} fullWidth maxWidth="xs">
+                <DialogTitle sx={{ m: 0, p: 2, position: 'relative' }}>
+                    Member Details
                     <IconButton
                         aria-label="close"
-                        onClick={handleCancelCreate}
-                        sx={{ position: 'absolute', right: 8, top: 8 }}
+                        onClick={handleCloseMember}
+                        sx={{
+                            position: 'absolute',
+                            right: 8,
+                            top: 8,
+                        }}
                     >
                         <CloseIcon />
                     </IconButton>
                 </DialogTitle>
-
                 <DialogContent dividers>
-                    <Stack spacing={3}>
-                        <TextField
-                            label="Group Name"
-                            fullWidth
-                            value={groupName}
-                            onChange={(e) => setGroupName(e.target.value)}
-                        />
-                        <Stack direction="row" spacing={2}>
-                            <TextField
-                                label="Search by email to add member (stub)"
-                                fullWidth
-                                value={memberInput}
-                                onChange={(e) => setMemberInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        handleAddMember();
-                                    }
-                                }}
-                            />
-                            <Button onClick={handleAddMember}>Add</Button>
+                    {selectedMember && (
+                        <Stack spacing={2}>
+                            <Typography><strong>Name:</strong> {selectedMember.name}</Typography>
+                            <Typography><strong>Email:</strong> {selectedMember.email}</Typography>
+                            <Typography><strong>Major:</strong> {selectedMember.major}</Typography>
+                            <Typography><strong>Resume:</strong> {selectedMember.resume}</Typography>
+                            <Typography><strong>Skill:</strong> {selectedMember.skill}</Typography>
                         </Stack>
-                        {groupMembers.length > 0 && (
-                            <Box>
-                                <Typography mb={1}>Added members:</Typography>
-                                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                                    {groupMembers.map(email => (
-                                        <Chip
-                                            key={email}
-                                            label={email}
-                                            onDelete={() => handleDeleteMember(email)}
-                                        />
-                                    ))}
-                                </Stack>
-                            </Box>
-                        )}
-                    </Stack>
+                    )}
                 </DialogContent>
-
-                <DialogActions sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Button variant="outlined" color="error" onClick={handleCancelCreate}>Cancel</Button>
-                    <Button
-                        variant="contained"
-                        disabled={!groupName.trim()}
-                        onClick={() => setOpenConfirm(true)}
-                        endIcon={<CheckCircleOutlineIcon />}
-                    >
-                        Confirm
-                    </Button>
-                </DialogActions>
             </Dialog>
-
-            {/* ============ Unsaved Changes Dialog ============ */}
-            <FrostDialog open={openDiscard} onClose={() => setOpenDiscard(false)} slots={{ transition: UpTransition }}>
-                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <InfoOutlinedIcon color="warning" />
-                    Unsaved Changes
-                </DialogTitle>
-                <DialogContent>Do you want to discard the group creation?</DialogContent>
-                <DialogActions sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Button onClick={() => setOpenDiscard(false)}>Continue Editing</Button>
-                    <Button color="error" onClick={handleCloseAll}>Discard</Button>
-                </DialogActions>
-            </FrostDialog>
-
-            {/* ============ Confirm Create Dialog ============ */}
-            <FrostDialog open={openConfirm} onClose={() => setOpenConfirm(false)} slots={{ transition: UpTransition }}>
-                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CheckCircleOutlineIcon color="success" />
-                    Confirm Group Creation?
-                </DialogTitle>
-                <DialogContent>
-                    <Typography>Group Name: {groupName || '(none)'}</Typography>
-                    <Typography>Members: {groupMembers.length}</Typography>
-                </DialogContent>
-                <DialogActions sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Button color="error" onClick={() => setOpenConfirm(false)}>Back</Button>
-                    <Button variant="contained" onClick={createGroup}>Create</Button>
-                </DialogActions>
-            </FrostDialog>
-
-            {/* ============ Snackbar Feedback ============ */}
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={3000}
-                onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-            >
-                <Alert
-                    onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-                    severity={snackbar.severity}
-                    sx={{ width: '100%' }}
-                >
-                    {snackbar.msg}
-                </Alert>
-            </Snackbar>
         </>
     );
 }
