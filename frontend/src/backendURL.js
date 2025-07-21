@@ -1,2 +1,2 @@
-const backendURL = 'https://0360-129-94-128-29.ngrok-free.app';
+const backendURL = 'https://d3a190cc54bd.ngrok-free.app';
 export default backendURL;

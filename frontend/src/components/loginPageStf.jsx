@@ -22,7 +22,7 @@ import AUTH from "../Constant";
 import CanvasCaptcha from './CanvasCaptcha'; 
 import backendURL from '../backendURL'; // Import backend URL
 
-import logo from '../assets/unsw_0.png'; // Import logo image
+import logo from '../assets/logo.jpg'; // Import logo image
 
 
 const LoginStf = (props) => {
@@ -59,7 +59,7 @@ const LoginStf = (props) => {
 
   const handleTabChange = (event, newValue) => {
     if (newValue === 0) {
-      navigate("/student"); // Redirect to register page
+      navigate("/student/login"); // Redirect to register page
       return;
     }
 
@@ -98,7 +98,7 @@ const LoginStf = (props) => {
       localStorage.setItem(AUTH.USER_KEY, email);
       localStorage.setItem(AUTH.Token_key, data.token);
       props.setToken(data.token); // Set parent state
-      navigate("/indexStf");     // Redirect to index page
+      navigate("/staff/index");     // Redirect to index page
     } else {
       // Show error from backend or generic message
       setError(data.error || "Login Failed");
@@ -121,7 +121,7 @@ const LoginStf = (props) => {
         <img
           src={logo}
           alt="Logo"
-          style={{ width: '110px', height: '50px' }}
+          style={{ width: '100px', height: '100px' }}
         />
       </Box>
       {/* Title */}
