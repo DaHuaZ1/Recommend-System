@@ -1,52 +1,51 @@
-import os
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 import re
 from collections import defaultdict
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import minmax_scale
+from models.project import Project
+from models.group import GroupMember
 
 # 设置远程 MySQL 数据库连接参数
-os.environ['MYSQL_HOST'] = '182.92.72.100'
-os.environ['MYSQL_PORT'] = '3306'
-os.environ['MYSQL_USER'] = 'cakeuser'
-os.environ['MYSQL_PASSWORD'] = '123456'
-os.environ['MYSQL_DB'] = 'capstone_project'  # 数据库名
+# os.environ['MYSQL_HOST'] = '182.92.72.100'
+# os.environ['MYSQL_PORT'] = '3306'
+# os.environ['MYSQL_USER'] = 'cakeuser'
+# os.environ['MYSQL_PASSWORD'] = '123456'
+# os.environ['MYSQL_DB'] = 'capstone_project'  # 数据库名
 # 创建 Flask 应用实例
-app = Flask(__name__)
+# app = Flask(__name__)
 # 读取数据库连接信息
-mysql_host = os.environ.get('MYSQL_HOST', 'localhost')
-mysql_port = os.environ.get('MYSQL_PORT', '3306')
-mysql_user = os.environ.get('MYSQL_USER', 'root')
-mysql_password = os.environ.get('MYSQL_PASSWORD', '')
-mysql_db = os.environ.get('MYSQL_DB', 'test')
+# mysql_host = os.environ.get('MYSQL_HOST', 'localhost')
+# mysql_port = os.environ.get('MYSQL_PORT', '3306')
+# mysql_user = os.environ.get('MYSQL_USER', 'root')
+# mysql_password = os.environ.get('MYSQL_PASSWORD', '')
+# mysql_db = os.environ.get('MYSQL_DB', 'test')
 # 配置 SQLAlchemy
-app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_db}'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_db}'
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # 初始化数据库
-db = SQLAlchemy(app)
+# db = SQLAlchemy(app)
 # ========== 模型定义 ==========
-class GroupMember(db.Model):
-    __tablename__ = 'group_members'
-    id = db.Column(db.Integer, primary_key=True)
-    group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=False)
-    user_id = db.Column(db.Integer, nullable=False, unique=True)
-    name = db.Column(db.String(128), nullable=False)
-    email = db.Column(db.String(128), nullable=False)
-    skill = db.Column(db.Text, nullable=True)
+# class GroupMember(db.Model):
+#     __tablename__ = 'group_members'
+#     id = db.Column(db.Integer, primary_key=True)
+#     group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=False)
+#     user_id = db.Column(db.Integer, nullable=False, unique=True)
+#     name = db.Column(db.String(128), nullable=False)
+#     email = db.Column(db.String(128), nullable=False)
+#     skill = db.Column(db.Text, nullable=True)
 
-class Project(db.Model):
-    __tablename__ = 'projects'
-    id = db.Column(db.Integer, primary_key=True)
-    project_number = db.Column(db.String(32), unique=True, nullable=False)
-    project_title = db.Column(db.String(1024), nullable=False)
-    client_name = db.Column(db.String(1024), nullable=False)
-    group_capacity = db.Column(db.String(32), nullable=False)
-    project_requirements = db.Column(db.Text, nullable=False)
-    required_skills = db.Column(db.Text, nullable=False)
-    pdf_file = db.Column(db.String(1024), nullable=True)
+# class Project(db.Model):
+#     __tablename__ = 'projects'
+#     id = db.Column(db.Integer, primary_key=True)
+#     project_number = db.Column(db.String(32), unique=True, nullable=False)
+#     project_title = db.Column(db.String(1024), nullable=False)
+#     client_name = db.Column(db.String(1024), nullable=False)
+#     group_capacity = db.Column(db.String(32), nullable=False)
+#     project_requirements = db.Column(db.Text, nullable=False)
+#     required_skills = db.Column(db.Text, nullable=False)
+#     pdf_file = db.Column(db.String(1024), nullable=True)
 
 skill_keywords = [
     # 编程语言
@@ -137,61 +136,62 @@ def analyze_skill_strength(text):
     return dict(rating)
 
 # ========== 主程序入口 ==========
-print("开始连接数据库...")
-try:
-    with app.app_context():
-        # 创建所有表
-        db.create_all()
-        # ------- 查询 GroupMember 表 -------
-        print("\n开始查询组成员记录...")
-        group_members = GroupMember.query.all()
-        print(f"查询完成，找到 {len(group_members)} 条组成员记录")
-        # if group_members:
-        #     print("=" * 80)
-        #     print("组成员表格所有字段信息:")
-        #     for i, member in enumerate(group_members, 1):
-        #         print(f"\n成员 {i}:")
-        #         print(f"  组ID: {member.group_id}")
-        #         print(f"  姓名: {member.name}")
-        #         print(f"  技能: {member.skill}")
-        #         rating = analyze_skill_strength(member.skill or "")
-        #         if rating:
-        #             for skill, score in rating.items():
-        #                 print(f"   - {skill}: {score}")
-        #         else:
-        #             print("无有效技能信息")
-        #         print("-" * 60)
+# print("开始连接数据库...")
+# try:
+#     with app.app_context():
+#         # 创建所有表
+#         db.create_all()
+#         # ------- 查询 GroupMember 表 -------
+#         print("\n开始查询组成员记录...")
+#         group_members = GroupMember.query.all()
+#         print(f"查询完成，找到 {len(group_members)} 条组成员记录")
+#         # if group_members:
+#         #     print("=" * 80)
+#         #     print("组成员表格所有字段信息:")
+#         #     for i, member in enumerate(group_members, 1):
+#         #         print(f"\n成员 {i}:")
+#         #         print(f"  组ID: {member.group_id}")
+#         #         print(f"  姓名: {member.name}")
+#         #         print(f"  技能: {member.skill}")
+#         #         rating = analyze_skill_strength(member.skill or "")
+#         #         if rating:
+#         #             for skill, score in rating.items():
+#         #                 print(f"   - {skill}: {score}")
+#         #         else:
+#         #             print("无有效技能信息")
+#         #         print("-" * 60)
 
-        # ------- 查询 Project 表 -------
-        print("\n开始查询项目记录...")
-        projects = Project.query.all()
-        print(f"查询完成，找到 {len(projects)} 条项目记录")
-        # if projects:
-        #     print("=" * 80)
-        #     print("项目表格所有字段信息:")
-        #     for i, project in enumerate(projects, 1):
-        #         print(f"\n项目 {i}:")
-        #         print(f"  项目标题: {project.project_title}")
-        #         print(f"  所需技能原文: {project.required_skills}")
-        #         rating = analyze_skill_strength(project.required_skills or "")
-        #         if rating:
-        #             print(f"  技能强度评分:")
-        #             for skill, score in rating.items():
-        #                 print(f"   - {skill}: {score}")
-        #         else:
-        #             print("  无有效技能信息")
-        #         print("-" * 60)
+#         # ------- 查询 Project 表 -------
+#         print("\n开始查询项目记录...")
+#         projects = Project.query.all()
+#         print(f"查询完成，找到 {len(projects)} 条项目记录")
+#         # if projects:
+#         #     print("=" * 80)
+#         #     print("项目表格所有字段信息:")
+#         #     for i, project in enumerate(projects, 1):
+#         #         print(f"\n项目 {i}:")
+#         #         print(f"  项目标题: {project.project_title}")
+#         #         print(f"  所需技能原文: {project.required_skills}")
+#         #         rating = analyze_skill_strength(project.required_skills or "")
+#         #         if rating:
+#         #             print(f"  技能强度评分:")
+#         #             for skill, score in rating.items():
+#         #                 print(f"   - {skill}: {score}")
+#         #         else:
+#         #             print("  无有效技能信息")
+#         #         print("-" * 60)
 
-except Exception as e:
-    print(f"执行过程中出现错误: {str(e)}")
-    import traceback
-    traceback.print_exc()
+# except Exception as e:
+#     print(f"执行过程中出现错误: {str(e)}")
+#     import traceback
+#     traceback.print_exc()
 
 class RecommendService:
     """推荐系统服务类"""
     _group_skills = None
     _project_skills = None
     _project_names = None
+    _project_ids = None
     _ALPHA = 0.7  # 匹配度权重
     _BETA = 0.3   # 项目相关互补度权重
 
@@ -200,35 +200,34 @@ class RecommendService:
         """
         从数据库加载成员技能和项目技能数据，构造向量
         """
-        with app.app_context():
-            # 技能词表用于构建统一维度的向量
-            all_skills = skill_keywords
+        # 技能词表用于构建统一维度的向量
+        all_skills = skill_keywords
 
-            # 查询组成员
-            group_members = GroupMember.query.all()
-            group_vectors = []
-            for member in group_members:
-                skill_dict = analyze_skill_strength(member.skill or "")
-                vector = [skill_dict.get(skill, 0) for skill in all_skills]
-                group_vectors.append(vector)
-            cls._group_skills = np.array(group_vectors)
+        # 查询组成员
+        group_members = GroupMember.query.all()
+        group_vectors = []
+        for member in group_members:
+            skill_dict = analyze_skill_strength(member.skill or "")
+            vector = [skill_dict.get(skill, 0) for skill in all_skills]
+            group_vectors.append(vector)
+        cls._group_skills = np.array(group_vectors)
 
-            # 查询项目
-            projects = Project.query.all()
-            project_vectors = []
-            project_names = []
-            project_ids = []
-            for project in projects:
-                skill_dict = analyze_skill_strength(project.required_skills or "")
-                if len(skill_dict) < 5:
-                    continue  # 忽略技能太少的项目
-                vector = [skill_dict.get(skill, 0) for skill in all_skills]
-                project_vectors.append(vector)
-                project_names.append(project.project_title)
-                project_ids.append(project.id)
-            cls._project_skills = np.array(project_vectors)
-            cls._project_names = project_names
-            cls._project_ids = project_ids
+        # 查询项目
+        projects = Project.query.all()
+        project_vectors = []
+        project_names = []
+        project_ids = []
+        for project in projects:
+            skill_dict = analyze_skill_strength(project.required_skills or "")
+            if len(skill_dict) < 5:
+                continue  # 忽略技能太少的项目
+            vector = [skill_dict.get(skill, 0) for skill in all_skills]
+            project_vectors.append(vector)
+            project_names.append(project.project_title)
+            project_ids.append(project.id)
+        cls._project_skills = np.array(project_vectors)
+        cls._project_names = project_names
+        cls._project_ids = project_ids
 
     @classmethod
     def compute_group_vector(cls, group_skills):
@@ -238,6 +237,7 @@ class RecommendService:
     @classmethod
     def compute_match_scores(cls, group_vector, project_skills):
         """计算匹配度分数（不归一化）"""
+        from sklearn.metrics.pairwise import cosine_similarity
         return cosine_similarity([group_vector], project_skills).flatten()
 
     @classmethod
@@ -257,6 +257,7 @@ class RecommendService:
 
     @classmethod
     def get_project_recommendations(cls, alpha=None, beta=None):
+        from sklearn.preprocessing import minmax_scale
         if alpha is None:
             alpha = cls._ALPHA
         if beta is None:
@@ -264,8 +265,8 @@ class RecommendService:
 
         group_vector = cls.compute_group_vector(cls._group_skills)
 
-        print("\n>>> 小组平均技能向量（所有维展示）:")
-        print(group_vector[:])
+        # print("\n>>> 小组平均技能向量（所有维展示）:")
+        # print(group_vector[:])
 
         match_scores = cls.compute_match_scores(group_vector, cls._project_skills)
         # print("\n>>> 原始匹配度分数 (cosine similarity):")
@@ -306,19 +307,4 @@ class RecommendService:
             })
         return recommendations
     
-if __name__ == '__main__':
-    print("\n开始执行推荐流程...")
-
-    try:
-        RecommendService.load_data_from_db()
-        print("数据加载完成")
-
-        recommendations = RecommendService.get_project_recommendations()
-        print("\n推荐项目列表（前6名）：")
-        for item in recommendations:
-            print(f"Rank {item['rank']}: {item['project_name']} (ID: {item['project_id']}, Score: {item['final_score']})")
-
-    except Exception as e:
-        print(f"推荐过程中出现错误: {str(e)}")
-        import traceback
-        traceback.print_exc()
+# 不要有 if __name__ == '__main__' 入口和 app/app_context 相关代码
