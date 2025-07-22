@@ -132,8 +132,8 @@ export default function GroupStf() {
                                         flexDirection: 'column',
                                         justifyContent: 'center',
                                         width: '100%',
-                                        maxWidth: 520,
-                                        minHeight: 360,
+                                        maxWidth: 1200,
+                                        minHeight: 300,
                                         p: 5,
                                         borderRadius: 4,
                                         backdropFilter: 'blur(10px)',
@@ -176,10 +176,10 @@ export default function GroupStf() {
                                         </>
                                     ) : (
                                         <>
-                                            <Typography variant="body2" color="text.secondary" mb={1}>
+                                            <Typography variant="h6" fontWeight={600} color="text.secondary" sx={{ mb: 3 }}>
                                                 Recommended Projects:
                                             </Typography>
-                                            <Stack spacing={1} justifyContent="center">
+                                            <Stack spacing={1} alignItems="flex-start" justifyContent="flex-start">
                                                 {(group.recommendProjects || []).map((p) => (
                                                     <Typography key={p.projectNumber} variant="body2">
                                                         {p.rank}.{' '}
@@ -228,7 +228,7 @@ export default function GroupStf() {
                             <Typography><strong>Name:</strong> {selectedMember.name}</Typography>
                             <Typography><strong>Email:</strong> {selectedMember.email}</Typography>
                             <Typography><strong>Major:</strong> {selectedMember.major}</Typography>
-                            <Typography><strong>Resume:</strong> {selectedMember.resume}</Typography>
+                            {/* <Typography><strong>Resume:</strong> {selectedMember.resume}</Typography> */}
                             <Typography><strong>Skill:</strong> {selectedMember.skill}</Typography>
                         </Stack>
                     )}
