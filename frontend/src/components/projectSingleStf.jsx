@@ -58,6 +58,9 @@ export default function ProjectSingle({ project }) {
       window.open(backendURL + project.pdfFile, "_blank");
     }
   };
+  const handleReupload = () => {
+    navigate('/staff/upload');
+  };
 
   // Decode JWT to check staff role
   let isStaff = false;
@@ -326,7 +329,7 @@ export default function ProjectSingle({ project }) {
                     size="small"
                     variant="contained"
                     color="warning"
-                    onClick={openDeleteDialog}
+                    onClick={handleReupload}
                   >
                     Reupload PDF
                   </Button>

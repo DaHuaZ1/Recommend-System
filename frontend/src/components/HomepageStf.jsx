@@ -45,18 +45,6 @@ const HomeStf = () => {
     navigate('/staff/upload');
   };
 
-  // 编辑按钮回调
-  const handleEdit = () => {
-    console.log('Edit project');
-    navigate('/staff/edit');
-  };
-
-  // 删除按钮回调
-  const handleDelete = () => {
-    console.log('Delete project');
-    // TODO: trigger delete confirmation
-  };
-
   // fetch所有项目列表的函数
   const fetchProjects = async () => {
     try {
