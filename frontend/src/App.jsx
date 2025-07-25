@@ -11,10 +11,8 @@ import RecommendStd from './components/recommendStd';
 import GroupStd from './components/groupPageStd';
 import LoginStf from './components/loginPageStf';
 import HomeStf from './components/HomepageStf';
-import UploadStd from './components/uploadPageStd';
-import ProfilePageStd  from './components/profilePageStd';
-import RecommendStd from './components/recommendStd';
-import GroupStd from './components/groupPageStd';
+import UploadStf from './components/uploadPageStf';
+import GroupStf from './components/groupPageStf';
 
 // Import MUI components
 import CssBaseline from '@mui/material/CssBaseline';
