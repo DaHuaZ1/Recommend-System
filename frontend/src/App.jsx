@@ -5,6 +5,10 @@ import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import HomeStd from './components/HomepageStd';
 import LoginStd from './components/loginPageStd';
 import Signup from './components/registerPage';
+import UploadStd from './components/uploadPageStd';
+import ProfilePageStd from './components/profilePageStd';
+import RecommendStd from './components/recommendStd';
+import GroupStd from './components/groupPageStd';
 import LoginStf from './components/loginPageStf';
 import HomeStf from './components/HomepageStf';
 import UploadStd from './components/uploadPageStd';
@@ -19,7 +23,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import ScrollToTop from './components/scrollToTop';
 
 function App() {
-  
+
   const [token, setToken] = useState(localStorage.getItem('token'));
 
   return (
@@ -34,11 +38,13 @@ function App() {
         <Route path="/student/profile" element={<ProfilePageStd token={token} />} />
         <Route path="/student/group/recommend" element={<RecommendStd token={token} />} />
         <Route path="/student/group" element={<GroupStd token={token} />} />
-        
+
         {/* Staff routes */}
-        <Route path="/staff/index" element={<HomeStf token={token}/>} />
+        <Route path="/staff/index" element={<HomeStf token={token} />} />
         <Route path="/staff/login" element={<LoginStf setToken={setToken} />} />
-        
+        <Route path='/staff/upload' element={<UploadStf token={token} />} />
+        <Route path="/staff/group" element={<GroupStf token={token} />} />
+
         {/* Signup route */}
         <Route path="/signup" element={<Signup setToken={setToken} />} />
       </Routes>

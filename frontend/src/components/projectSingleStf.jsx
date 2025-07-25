@@ -1,0 +1,378 @@
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import Paper from "@mui/material/Paper";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
+
+import backendURL from "../backendURL";
+
+export default function ProjectSingle({ project }) {
+  const [open, setOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    projectTitle: "",
+    clientName: "",
+    groupCapacity: "",
+    requiredSkills: "",
+    projectRequirements: ""
+  });
+  const originalData = useMemo(() => ({
+    projectTitle: project.projectTitle || "",
+    clientName: project.clientName || "",
+    groupCapacity: project.groupCapacity || "",
+    requiredSkills: project.requiredSkills || "",
+    projectRequirements: project.projectRequirements || ""
+  }), [project]);
+
+  const isModified = useMemo(() => {
+    return Object.keys(originalData).some(
+      key => formData[key] !== originalData[key]
+    );
+  }, [formData, originalData]);
+
+  // Initialize form data when dialog opens
+  useEffect(() => {
+    if (open) {
+      setFormData(originalData);
+      setIsEditing(false);
+    }
+  }, [open, project]);
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => {
+    setOpen(false);
+    window.location.reload();
+  };
+
+  const handleDownload = () => {
+    if (project.pdfFile) {
+      window.open(backendURL + project.pdfFile, "_blank");
+    }
+  };
+  const handleReupload = () => {
+    navigate('/staff/upload');
+  };
+
+  // Decode JWT to check staff role
+  let isStaff = false;
+  try {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const base64 = token.split(".")[1];
+      const json = atob(base64.replace(/-/g, "+").replace(/_/g, "/"));
+      const payload = JSON.parse(json);
+      isStaff = payload.role?.includes("teacher");
+    }
+  } catch (e) {
+    console.error("Token parse error:", e);
+  }
+
+  const handleChange = (e) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
+
+  const handleSave = async () => {
+    const token = localStorage.getItem("token");
+    setSaving(true);
+    try {
+      const payload = new FormData();
+      payload.append(
+        "projects",
+        JSON.stringify([{ projectNumber: project.projectNumber, ...formData }])
+      );
+
+      const res = await fetch(`${backendURL}/api/staff/projects`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+        body: payload,
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`HTTP ${res.status} — ${text}`);
+      }
+
+      // switch back to view mode; formData now holds updated values
+      setIsEditing(false);
+      window.location.reload();
+    } catch (err) {
+      console.error("保存项目出错:", err);
+      alert("Saving projects failed: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData(originalData);
+    setIsEditing(false);
+  };
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const openDeleteDialog = () => setDeleteDialogOpen(true);
+  const closeDeleteDialog = () => setDeleteDialogOpen(false);
+
+  const confirmDelete = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${backendURL}/api/staff/projects`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ projectNumber: project.projectNumber })
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`HTTP ${res.status} – ${text}`);
+      }
+      setOpen(false);
+      closeDeleteDialog();
+      window.location.reload();
+    } catch (err) {
+      console.error("Error deleting project:", err);
+      alert("Failed to delete project: " + err.message);
+    }
+  };
+
+  return (
+    <>
+      {/* 项目卡片 */}
+      <Paper
+        elevation={3}
+        onClick={handleOpen}
+        sx={{
+          p: 3,
+          mb: 3,
+          borderRadius: 3,
+          display: "flex",
+          alignItems: "center",
+          cursor: "pointer",
+          bgcolor: "#f3f6ff",
+          transition: "background 0.2s",
+          "&:hover": { bgcolor: "#eaf0ff" }
+        }}
+      >
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography variant="h6" fontWeight={700}>
+            {project.projectNumber
+              ? `Project ${project.projectNumber}`
+              : "Project"}
+          </Typography>
+          <Typography
+            color="text.secondary"
+            sx={{
+              maxWidth: "600px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap"
+            }}
+          >
+            {project.projectTitle || "Project Title"}
+          </Typography>
+        </Box>
+      </Paper>
+
+      {/* 详情弹窗 */}
+      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+        <IconButton
+          onClick={handleClose}
+          sx={{ position: "absolute", right: 8, top: 8 }}
+        >
+          <CloseIcon />
+        </IconButton>
+        <DialogTitle fontWeight={700}>{project.projectTitle}</DialogTitle>
+        <DialogContent dividers>
+          {/* Title */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600}>Title</Typography>
+            {isEditing ? (
+              <TextField
+                name="projectTitle"
+                fullWidth
+                value={formData.projectTitle}
+                onChange={handleChange}
+              />
+            ) : (
+              <Typography color="text.secondary">
+                {formData.projectTitle}
+              </Typography>
+            )}
+          </Box>
+
+          {/* Background */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600}>Background</Typography>
+            <Typography color="text.secondary">Find on PDF file.</Typography>
+          </Box>
+
+          {/* Client Name */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600}>Client Name</Typography>
+            {isEditing ? (
+              <TextField
+                name="clientName"
+                fullWidth
+                value={formData.clientName}
+                onChange={handleChange}
+              />
+            ) : (
+              <Typography color="text.secondary">
+                {formData.clientName || 'TBD'}
+              </Typography>
+            )}
+          </Box>
+
+          {/* Group Capacity */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600}>Group Capacity</Typography>
+            {isEditing ? (
+              <TextField
+                name="groupCapacity"
+                fullWidth
+                value={formData.groupCapacity}
+                onChange={handleChange}
+              />
+            ) : (
+              <Typography color="text.secondary">
+                {formData.groupCapacity || 'TBD'}
+              </Typography>
+            )}
+          </Box>
+
+          {/* Required Skills */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600}>Required Skills</Typography>
+            {isEditing ? (
+              <TextField
+                name="requiredSkills"
+                fullWidth
+                multiline
+                minRows={1}
+                maxRows={4}
+                value={formData.requiredSkills}
+                onChange={handleChange}
+              />
+            ) : (
+              <Typography
+                color="text.secondary"
+                sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+              >
+                {formData.requiredSkills || 'TBD'}
+              </Typography>
+            )}
+          </Box>
+
+          {/* Project Requirements */}
+          <Box>
+            <Typography variant="subtitle1" fontWeight={600}>Project Requirements</Typography>
+            {isEditing ? (
+              <TextField
+                name="projectRequirements"
+                fullWidth
+                multiline
+                rows={4}
+                value={formData.projectRequirements}
+                onChange={handleChange}
+              />
+            ) : (
+              <Typography
+                color="text.secondary"
+                sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+              >
+                {formData.projectRequirements || 'TBD'}
+              </Typography>
+            )}
+          </Box>
+        </DialogContent>
+
+        <DialogActions
+          sx={{
+            flexDirection: "column",
+            alignItems: "center",
+            py: 2,
+            gap: 1
+          }}
+        >
+          {isEditing ? (
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                size="small"
+                variant="contained"
+                onClick={handleSave}
+                disabled={saving || !isModified}
+              >
+                {saving ? "Saving…" : "Save"}
+              </Button>
+              <Button size="small" variant="outlined" onClick={handleCancel}>
+                Cancel
+              </Button>
+            </Box>
+          ) : (
+            <>
+              {isStaff && (
+                <Box sx={{ display: "flex", gap: 1 }}>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    color="warning"
+                    onClick={handleReupload}
+                  >
+                    Reupload PDF
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    color="success"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    color="error"
+                    onClick={openDeleteDialog}
+                  >
+                    Delete
+                  </Button>
+                  <Button size="small" variant="contained" onClick={handleDownload}>
+                    Download PDF
+                  </Button>
+                </Box>
+              )}
+            </>
+          )}
+        </DialogActions>
+
+      </Dialog>
+
+      {/* 删除确认弹窗 */}
+      <Dialog open={deleteDialogOpen} onClose={closeDeleteDialog}>
+        <DialogTitle>Delete Project?</DialogTitle>
+        <DialogContent>
+          <Typography>Are you sure you want to delete this project?</Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: "space-between", px: 3, pb: 2 }}>
+          <Button color="error" onClick={closeDeleteDialog}>Cancel</Button>
+          <Button variant="contained" color="primary" onClick={confirmDelete}>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+}
