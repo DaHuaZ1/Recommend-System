@@ -11,8 +11,10 @@ import RecommendStd from './components/recommendStd';
 import GroupStd from './components/groupPageStd';
 import LoginStf from './components/loginPageStf';
 import HomeStf from './components/HomepageStf';
-import UploadStf from './components/uploadPageStf';
-import GroupStf from './components/groupPageStf';
+import UploadStd from './components/uploadPageStd';
+import ProfilePageStd  from './components/profilePageStd';
+import RecommendStd from './components/recommendStd';
+import GroupStd from './components/groupPageStd';
 
 // Import MUI components
 import CssBaseline from '@mui/material/CssBaseline';
@@ -29,8 +31,8 @@ function App() {
       <CssBaseline />
       <ScrollToTop />
       <Routes>
-        <Route path="/" element={<LoginStd setToken={setToken} />} />
-        <Route path="/student/index" element={<HomeStd token={token} />} />
+        <Route path="/" element={<LoginStd setToken={setToken}/>} />
+        <Route path="/student/index" element={<HomeStd token={token}/>} />
         <Route path="/student/login" element={<LoginStd setToken={setToken} />} />
         <Route path='/student/upload' element={<UploadStd token={token} />} />
         <Route path="/student/profile" element={<ProfilePageStd token={token} />} />

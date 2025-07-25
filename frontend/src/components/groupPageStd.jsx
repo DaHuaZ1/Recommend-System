@@ -406,7 +406,7 @@ export default function GroupStd() {
         </DialogTitle>
         <DialogContent>
           <Typography>Group Name: {groupName || '(none)'}</Typography>
-          <Typography>Members: {groupMembers.length}</Typography>
+          <Typography>Members: {groupMembers.length + 1}</Typography>
         </DialogContent>
         <DialogActions sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Button color="error" onClick={() => setOpenConfirm(false)}>Back</Button>

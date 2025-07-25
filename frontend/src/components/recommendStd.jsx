@@ -180,7 +180,7 @@ export default function RecommendStd() {
         </Stack>
         <Stack spacing={3} sx={{ pb: 6 }}>
           {recommendedProjects.slice(0, 6).map((project, i) => (
-            <ProjectSingle key={project.id || i} project={project} />
+            <ProjectSingle key={project.id || i} project={project} delay={i * 100} />
           ))}
         </Stack>
       </Box>
