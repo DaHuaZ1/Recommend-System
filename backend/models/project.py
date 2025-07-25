@@ -1,4 +1,5 @@
 from models.user import db
+from datetime import datetime
 
 class Project(db.Model):
     __tablename__ = 'projects'
@@ -9,4 +10,5 @@ class Project(db.Model):
     group_capacity = db.Column(db.String(32), nullable=False)
     project_requirements = db.Column(db.Text, nullable=False)
     required_skills = db.Column(db.Text, nullable=False)
-    pdf_file = db.Column(db.String(1024), nullable=True)    
+    pdf_file = db.Column(db.String(1024), nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)    

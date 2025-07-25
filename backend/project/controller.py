@@ -146,6 +146,9 @@ def update_staff_projects():
                     type: string
                   pdfFile:
                     type: string
+                  updatetime:
+                    type: string
+                    example: "2024-07-01T12:34:56.789Z"
       400:
         description: 请求参数错误
       401:
@@ -182,6 +185,7 @@ def update_staff_projects():
             'projectRequirements': project.project_requirements,
             'requiredSkills': project.required_skills,
             'pdfFile': project.pdf_file,
+            'updatetime': project.updated_at.isoformat() if project.updated_at else None,
         })
     return jsonify({'status': '200', 'projects': updated_projects})
 
@@ -289,6 +293,21 @@ def get_projects():
                   pdfFile:
                     type: string
                     example: "/api/files/1751360465_-.pdf"
+                  updatetime:
+                    type: string
+                    example: "2024-07-01T12:34:56.789Z"
+                  topGroups:
+                    type: array
+                    description: "推荐分数最高的前三个组及其分数"
+                    items:
+                      type: object
+                      properties:
+                        groupName:
+                          type: string
+                          example: "Team Alpha"
+                        score:
+                          type: number
+                          example: 0.95
         examples:
           application/json:
             status: "200"
@@ -300,6 +319,14 @@ def get_projects():
                 projectRequirements: "Develop an intelligent recommendation system supporting multiple algorithms."
                 requiredSkills: "Python, Machine Learning"
                 pdfFile: "/api/files/1751360465_-.pdf"
+                updatetime: "2024-07-01T12:34:56.789Z"
+                topGroups:
+                  - groupName: "Team Alpha"
+                    score: 0.95
+                  - groupName: "Team Beta"
+                    score: 0.92
+                  - groupName: "Team Gamma"
+                    score: 0.90
               - projectNumber: "2"
                 projectTitle: "Big Data Analytics Platform"
                 clientName: "Alibaba"
@@ -307,6 +334,14 @@ def get_projects():
                 projectRequirements: "Build a big data analytics platform with real-time data processing capabilities."
                 requiredSkills: "Java, Hadoop, Spark"
                 pdfFile: "/api/files/1751360465_-.pdf"
+                updatetime: "2024-07-01T12:34:56.789Z"
+                topGroups:
+                  - groupName: "Team Alpha"
+                    score: 0.88
+                  - groupName: "Team Beta"
+                    score: 0.85
+                  - groupName: "Team Gamma"
+                    score: 0.80
       401:
         description: 未授权或token无效
     """

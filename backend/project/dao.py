@@ -6,7 +6,18 @@ def get_all_projects():
     # 从数据库查询所有项目
     projects = Project.query.all()
     result = []
+    from models.group_project_recommendation import GroupProjectRecommendation
+    from models.group import Group
     for p in projects:
+        # 查询该项目推荐分数前三的组
+        recs = GroupProjectRecommendation.query.filter_by(project_id=p.id).order_by(GroupProjectRecommendation.final_score.desc()).limit(3).all()
+        top_groups = []
+        for rec in recs:
+            group = Group.query.get(rec.group_id)
+            top_groups.append({
+                'groupName': group.group_name if group else None,
+                'score': rec.final_score
+            })
         result.append({
             "projectNumber": p.project_number,
             "projectTitle": p.project_title,
@@ -14,7 +25,9 @@ def get_all_projects():
             "groupCapacity": p.group_capacity,
             "projectRequirements": p.project_requirements,
             "requiredSkills": p.required_skills,
-            "pdfFile": p.pdf_file
+            "pdfFile": p.pdf_file,
+            "updatetime": p.updated_at.isoformat() if p.updated_at else None,
+            "topGroups": top_groups
         })
     return result
 
@@ -48,7 +61,7 @@ def save_project_to_db(project_info, pdf_file):
             pdf_file=pdf_file
         )
         db.session.add(project)
-    db.session.commit()
+        db.session.commit()
     return project 
 
 def upsert_project_by_number(info):

@@ -35,6 +35,7 @@ def save_projects_from_files(files, upload_dir):
                 'projectRequirements': project.project_requirements,
                 'requiredSkills': project.required_skills,
                 'pdfFile': pdf_api_path,
+                'updatetime': project.updated_at.isoformat() if project.updated_at else None,
             })
         except Exception as e:
             print("[FATAL] 数据库写入异常:", e, flush=True)
