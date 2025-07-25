@@ -39,3 +39,39 @@ def get_user_group_info(user_id):
         'groupName': group.group_name,
         'groupMembers': group_member_dict 
     } 
+
+def get_all_groups_with_members_and_recommendations():
+    from . import dao as group_dao
+    from models.project import Project
+    groups = group_dao.get_all_groups()
+    result = []
+    for group in groups:
+        members = group_dao.get_group_members(group.id)
+        member_list = []
+        for m in members:
+            resume = group_dao.get_resume_by_user_id(m.user_id)
+            member_list.append({
+                'name': m.name,
+                'skill': m.skill or (resume.skill if resume else ''),
+                'email': m.email,
+                'major': resume.major if resume else '',
+                'resume': resume.id if resume else ''
+            })
+        recs = group_dao.get_group_recommendations(group.id)
+        rec_projects = []
+        for rec in recs:
+            project = Project.query.get(rec.project_id)
+            if not project:
+                continue
+            rec_projects.append({
+                'projectNumber': project.project_number,
+                'projectTitle': project.project_title,
+                'final_score': f"{rec.final_score:.4f}",
+                'rank': rec.rank
+            })
+        result.append({
+            'groupName': group.group_name,
+            'groupMembers': member_list,
+            'recommendProjects': rec_projects
+        })
+    return result 

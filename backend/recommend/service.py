@@ -280,17 +280,21 @@ class RecommendService:
             # print(f"  {cls._project_names[i]} 互补度: {comp_score:.4f}")
 
         # 只归一化互补度
+        match_scores_norm = minmax_scale(match_scores)
         comp_scores_norm = minmax_scale(project_comp_scores)
+
 
         # print("\n>>> 归一化后的互补度：")
         # for i, s in enumerate(comp_scores_norm):
         #     print(f"  {cls._project_names[i]} => {s:.4f}")
 
         # 加权求和：匹配度不归一化，互补度归一化
-        weighted_match_scores = alpha * match_scores
+        weighted_match_scores = alpha * match_scores_norm
         weighted_comp_scores = beta * comp_scores_norm
         total_scores = weighted_match_scores + weighted_comp_scores
-
+        # 分数大于0.9的项减去0.3
+        total_scores = np.where(total_scores > 0.9, total_scores - 0.1, total_scores)
+        
         # print("\n>>> 最终加权总分：")
         # for i, s in enumerate(total_scores):
         #     print(f"  {cls._project_names[i]} => {s:.4f}")

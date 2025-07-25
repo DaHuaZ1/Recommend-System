@@ -49,7 +49,7 @@ def save_project_to_db(project_info, pdf_file):
         )
         db.session.add(project)
     db.session.commit()
-    return project
+    return project 
 
 def upsert_project_by_number(info):
     """
@@ -92,6 +92,9 @@ def delete_project_by_number(project_number):
     project = Project.query.filter_by(project_number=project_number).first()
     if project:
         from models.user import db
+        # 先删除依赖表中的相关数据
+        from models.group_project_recommendation import GroupProjectRecommendation
+        GroupProjectRecommendation.query.filter_by(project_id=project.id).delete()
         db.session.delete(project)
         db.session.commit()
         return True

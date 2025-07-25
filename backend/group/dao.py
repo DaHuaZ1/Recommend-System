@@ -33,4 +33,18 @@ def get_group_by_id(group_id):
     return Group.query.get(group_id)
 
 def get_group_members_by_group_id(group_id):
-    return GroupMember.query.filter_by(group_id=group_id).all() 
+    return GroupMember.query.filter_by(group_id=group_id).all()
+
+def get_all_groups():
+    return Group.query.all()
+
+def get_group_members(group_id):
+    return GroupMember.query.filter_by(group_id=group_id).all()
+
+def get_group_recommendations(group_id):
+    from models.group_project_recommendation import GroupProjectRecommendation
+    return GroupProjectRecommendation.query.filter_by(group_id=group_id).order_by(GroupProjectRecommendation.rank).all()
+
+def get_resume_by_user_id(user_id):
+    from models.student_resume import StudentResume
+    return StudentResume.query.filter_by(user_id=user_id).first() 

@@ -40,7 +40,7 @@ def save_projects_from_files(files, upload_dir):
             print("[FATAL] 数据库写入异常:", e, flush=True)
             traceback.print_exc()
             raise
-    return projects
+    return projects 
 
 def update_project_from_info(info):
     """

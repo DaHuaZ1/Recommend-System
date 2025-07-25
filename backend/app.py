@@ -25,7 +25,7 @@ def create_app():
     # 创建Flask应用实例
     app = Flask(__name__)
 
-    # 从Config类加载所有配置
+    # 从Config类加载所有配置 
     # 包括数据库连接、JWT密钥、教师秘钥等
     app.config.from_object(Config)
 

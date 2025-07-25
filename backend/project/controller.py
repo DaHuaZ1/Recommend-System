@@ -159,15 +159,18 @@ def update_staff_projects():
         return jsonify({'error': 'token无效'}), 401
     # 获取 projects 字段
     projects_json = request.form.get('projects')
+    print('收到的 projects_json:', projects_json)
     if not projects_json:
         return jsonify({'error': '缺少 projects 字段'}), 400
     import json
     try:
         projects_data = json.loads(projects_json)
+        print('解析后的 projects_data:', projects_data)
     except Exception as e:
         return jsonify({'error': f'projects 字段不是合法 JSON: {e}'}), 400
     updated_projects = []
     for info in projects_data:
+        print('单个 info:', info)
         # 支持pdfFile字段写入
         from . import service as project_service
         project = project_service.update_project_from_info(info)

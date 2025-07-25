@@ -152,3 +152,74 @@ def get_my_group():
     user_id = payload.get('user_id')
     result = group_service.get_user_group_info(user_id)
     return jsonify(result) 
+
+@group_bp.route('/staff/groups', methods=['GET'])
+def get_all_groups_with_recommendations():
+    """
+    获取所有分组及其成员和推荐项目
+    ---
+    tags:
+      - 分组
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+        description: Bearer token
+    responses:
+      200:
+        description: 查询成功
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: "200"
+            groups:
+              type: array
+              items:
+                type: object
+                properties:
+                  groupName:
+                    type: string
+                  groupMembers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        skill:
+                          type: string
+                        email:
+                          type: string
+                        major:
+                          type: string
+                        resume:
+                          type: string
+                  recommendProjects:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        projectNumber:
+                          type: string
+                        projectTitle:
+                          type: string
+                        final_score:
+                          type: string
+                        rank:
+                          type: integer
+      401:
+        description: 未授权或token无效
+    """
+    token = get_token_from_header()
+    if not token:
+        return jsonify({'error': '未授权'}), 401
+    payload = verify_token(token)
+    if not payload:
+        return jsonify({'error': 'token无效'}), 401
+
+    from . import service as group_service
+    groups = group_service.get_all_groups_with_members_and_recommendations()
+    return jsonify({'status': '200', 'groups': groups}) 

@@ -2,6 +2,9 @@ from flask import Blueprint, request, jsonify
 from utils.jwt_utils import verify_token
 from models.project import Project
 from models.group import GroupMember
+from models.group_project_recommendation import GroupProjectRecommendation
+from models.user import db
+from datetime import datetime
 import traceback
 
 recommend_bp = Blueprint('recommend', __name__)
@@ -109,6 +112,23 @@ def get_recommendations():
         from recommend.service import RecommendService
         RecommendService.load_data_from_db()
         recommendations = RecommendService.get_project_recommendations()
+
+        # === 新增：保存推荐结果到数据库 ===
+        # 先删除该小组旧的推荐结果
+        GroupProjectRecommendation.query.filter_by(group_id=group_id).delete()
+        db.session.commit()
+        # 批量插入新推荐
+        for rec in recommendations:
+            db.session.add(GroupProjectRecommendation(
+                group_id=group_id,
+                project_id=rec['project_id'],
+                final_score=rec['final_score'],
+                rank=rec['rank'],
+                created_at=datetime.utcnow()
+            ))
+        db.session.commit()
+        # === 新增结束 ===
+
         projects = []
         for rec in recommendations:
             project = Project.query.get(rec['project_id'])
