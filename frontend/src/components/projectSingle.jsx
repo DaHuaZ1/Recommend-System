@@ -10,14 +10,15 @@ import {
   DialogTitle,
   DialogActions,
   Button,
-  IconButton
+  IconButton,
+  Slide
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useLocation } from "react-router-dom"; // 新增
 // utils
 import backendURL from "../backendURL";
 
-export default function ProjectSingle({ project }) {
+export default function ProjectSingle({ project, delay = 0 }) {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation(); // 获取当前路径
 
@@ -41,84 +42,93 @@ export default function ProjectSingle({ project }) {
 
   return (
     <>
-      <Paper
-        elevation={3}
-        onClick={handleOpen}
-        sx={{
-          p: 3,
-          mb: 3,
-          borderRadius: 3,
-          display: "flex",
-          alignItems: "center",
-          cursor: "pointer",
-          bgcolor: "#f3f6ff",
-          transition: "background 0.2s",
-          "&:hover": { bgcolor: "#eaf0ff" }
-        }}
+      <Slide
+        direction="left"
+        in={true}
+        mountOnEnter
+        unmountOnExit
+        timeout={{ enter: 500, exit: 300 }}
+        style={{ transitionDelay: `${delay}ms` }}
       >
-        <Box sx={{ flexGrow: 1 }}>
-          <Typography variant="h6" fontWeight={700}>
-            {`Project ${project.projectNumber ?? ""}`}
-          </Typography>
-          <Typography
-            color="text.secondary"
-            sx={{
-              maxWidth: "600px",
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {project.projectTitle || "Project Title"}
-          </Typography>
-        </Box>
-
-        {/* 仅在 /student/group/recommend 页面显示进度环 */}
-        {pathname === "/student/group/recommend" && (
-          <Box sx={{ position: "relative", width: 60, height: 60, mr: 2.5, flexShrink: 0 }}>
-            {/* Background track */}
-            <CircularProgress
-              variant="determinate"
-              value={100}
-              size={60}
-              thickness={4}
-              sx={{ color: 'grey.300', position: 'absolute', top: 0, left: 0 }}
-            />
-            {/* Animated foreground */}
-            <CircularProgress
-              variant="determinate"
-              value={percentage}
-              size={60}
-              thickness={4}
+        <Paper
+          elevation={3}
+          onClick={handleOpen}
+          sx={{
+            p: 3,
+            mb: 3,
+            borderRadius: 3,
+            display: "flex",
+            alignItems: "center",
+            cursor: "pointer",
+            bgcolor: "#f3f6ff",
+            transition: "background 0.2s",
+            "&:hover": { bgcolor: "#eaf0ff" }
+          }}
+        >
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="h6" fontWeight={700}>
+              {`Project ${project.projectNumber ?? ""}`}
+            </Typography>
+            <Typography
+              color="text.secondary"
               sx={{
-                color: ringColor,
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                transform: 'rotate(-90deg)',
-                transition: 'all 0.5s ease-out',
-                '& .MuiCircularProgress-circle': {
-                  strokeLinecap: 'round'
-                }
-              }}
-            />
-            {/* Percentage label */}
-            <Box
-              sx={{
-                position: "absolute",
-                inset: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
+                maxWidth: "600px",
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
               }}
             >
-              <Typography variant="subtitle2" fontWeight={700} color={ringColor}>
-                {`${percentage}%`}
-              </Typography>
-            </Box>
+              {project.projectTitle || "Project Title"}
+            </Typography>
           </Box>
-        )}
-      </Paper>
+
+          {/* 仅在 /student/group/recommend 页面显示进度环 */}
+          {pathname === "/student/group/recommend" && (
+            <Box sx={{ position: "relative", width: 60, height: 60, mr: 2.5, flexShrink: 0 }}>
+              {/* Background track */}
+              <CircularProgress
+                variant="determinate"
+                value={100}
+                size={60}
+                thickness={4}
+                sx={{ color: 'grey.300', position: 'absolute', top: 0, left: 0 }}
+              />
+              {/* Animated foreground */}
+              <CircularProgress
+                variant="determinate"
+                value={percentage}
+                size={60}
+                thickness={4}
+                sx={{
+                  color: ringColor,
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  transform: 'rotate(-90deg)',
+                  transition: 'all 0.5s ease-out',
+                  '& .MuiCircularProgress-circle': {
+                    strokeLinecap: 'round'
+                  }
+                }}
+              />
+              {/* Percentage label */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                <Typography variant="subtitle2" fontWeight={700} color={ringColor}>
+                  {`${percentage}%`}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </Paper>
+      </Slide>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <IconButton

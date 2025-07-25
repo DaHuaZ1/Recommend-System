@@ -185,7 +185,7 @@ const HomeStd = () => {
         {projects.length > 0 ? (
           filteredProjects.length > 0 ? (
             filteredProjects.map((project, index) => (
-              <ProjectSingle key={index} project={project} />
+              <ProjectSingle key={index} project={project} delay={index * 100} />
             ))
           ) : (
             <Typography variant="body2" color="text.secondary" align="center">
