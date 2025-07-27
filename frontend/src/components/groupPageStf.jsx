@@ -179,28 +179,35 @@ export default function GroupStf() {
                                             <Typography variant="h6" fontWeight={600} color="text.secondary" sx={{ mb: 3 }}>
                                                 Recommended Projects:
                                             </Typography>
-                                            <Stack spacing={1} alignItems="flex-start" justifyContent="flex-start">
-                                                {(group.recommendProjects || []).map((p) => (
-                                                    <Typography key={p.projectNumber} variant="body2">
-                                                        {p.rank}.{' '}
-                                                        <Box
-                                                            component="span"
-                                                            sx={{
-                                                                cursor: 'pointer',
-                                                                textDecoration: 'underline',
-                                                                color: 'primary.main'
-                                                            }}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleOpenProject(p.projectNumber, e);
-                                                            }}
-                                                        >
-                                                            {p.projectTitle}
-                                                        </Box>
-                                                        {` (Score: ${p.final_score})`}
-                                                    </Typography>
-                                                ))}
-                                            </Stack>
+                                            {group.recommendProjects && group.recommendProjects.length > 0 ? (
+                                                <Stack spacing={1} alignItems="flex-start" justifyContent="flex-start">
+                                                    {group.recommendProjects.map((p) => (
+                                                        <Typography key={p.projectNumber} variant="body2">
+                                                            {p.rank}.{' '}
+                                                            <Box
+                                                                component="span"
+                                                                sx={{
+                                                                    cursor: 'pointer',
+                                                                    textDecoration: 'underline',
+                                                                    color: 'primary.main'
+                                                                }}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleOpenProject(p.projectNumber, e);
+                                                                }}
+                                                            >
+                                                                {p.projectTitle}
+                                                            </Box>
+                                                            {` (Score: ${p.final_score})`}
+                                                        </Typography>
+                                                    ))}
+                                                </Stack>
+                                            ) : (
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Group has not clicked recommend button.
+                                                </Typography>
+                                            )}
+
                                         </>
                                     )}
                                 </Paper>
