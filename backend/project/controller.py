@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, send_from_directory
 from utils.jwt_utils import verify_token
 from . import service as project_service
 import os
+from datetime import datetime, timezone, timedelta
 
 project_bp = Blueprint('project', __name__)
 
@@ -16,6 +17,21 @@ def get_token_from_header():
         return token
     except ValueError:
         return None
+
+def convert_to_local_time(time_obj):
+    """将时间对象转换为澳洲东部时间字符串"""
+    if not time_obj:
+        return None
+    
+    # 如果时间对象没有时区信息，假设它是澳洲时间
+    if time_obj.tzinfo is None:
+        australia_tz = timezone(timedelta(hours=10))
+        time_obj = time_obj.replace(tzinfo=australia_tz)
+    
+    # 转换为澳洲东部时间
+    australia_tz = timezone(timedelta(hours=10))
+    local_time = time_obj.astimezone(australia_tz)
+    return local_time.isoformat()
 
 @project_bp.route('/staff/projects', methods=['POST'])
 def upload_staff_projects():
@@ -64,6 +80,8 @@ def upload_staff_projects():
                     type: string
                   requiredSkills:
                     type: string
+                  pdfFile:
+                    type: string
       400:
         description: 参数错误
       401:
@@ -88,6 +106,9 @@ def upload_staff_projects():
         file.save(file_path)
         from utils.project_utils import parse_project_pdf
         info = parse_project_pdf(file_path, filename)
+        # 增加pdfFile字段，返回API路径
+        api_path = f"/api/files/project/{filename}"
+        info['pdfFile'] = api_path
         projects.append(info)
     return jsonify({'status': '200', 'projects': projects})
 
@@ -139,6 +160,11 @@ def update_staff_projects():
                     type: string
                   requiredSkills:
                     type: string
+                  pdfFile:
+                    type: string
+                  updatetime:
+                    type: string
+                    example: "2024-07-01T22:34:56+10:00"
       400:
         description: 请求参数错误
       401:
@@ -152,16 +178,19 @@ def update_staff_projects():
         return jsonify({'error': 'token无效'}), 401
     # 获取 projects 字段
     projects_json = request.form.get('projects')
+    print('收到的 projects_json:', projects_json)
     if not projects_json:
         return jsonify({'error': '缺少 projects 字段'}), 400
     import json
     try:
         projects_data = json.loads(projects_json)
+        print('解析后的 projects_data:', projects_data)
     except Exception as e:
         return jsonify({'error': f'projects 字段不是合法 JSON: {e}'}), 400
     updated_projects = []
     for info in projects_data:
-        # 这里假设 pdf_file 不更新
+        print('单个 info:', info)
+        # 支持pdfFile字段写入
         from . import service as project_service
         project = project_service.update_project_from_info(info)
         updated_projects.append({
@@ -171,6 +200,8 @@ def update_staff_projects():
             'groupCapacity': project.group_capacity,
             'projectRequirements': project.project_requirements,
             'requiredSkills': project.required_skills,
+            'pdfFile': project.pdf_file,
+            'updatetime': convert_to_local_time(project.updated_at),
         })
     return jsonify({'status': '200', 'projects': updated_projects})
 
@@ -278,6 +309,37 @@ def get_projects():
                   pdfFile:
                     type: string
                     example: "/api/files/1751360465_-.pdf"
+                  pdf:
+                    type: string
+                    description: "PDF文件的base64编码二进制数据"
+                    example: "JVBERi0xLjQKJcOkw7zDtsO..."
+                  updatetime:
+                    type: string
+                    example: "2024-07-01T22:34:56+10:00"
+                  final_score:
+                    type: string
+                    description: "最终推荐分数"
+                    example: "0.95"
+                  match_score:
+                    type: string
+                    description: "匹配分数"
+                    example: "0.85"
+                  complementarity_score:
+                    type: string
+                    description: "互补分数"
+                    example: "0.90"
+                  topGroups:
+                    type: array
+                    description: "推荐分数最高的前三个组及其分数"
+                    items:
+                      type: object
+                      properties:
+                        groupName:
+                          type: string
+                          example: "Team Alpha"
+                        score:
+                          type: number
+                          example: 0.95
         examples:
           application/json:
             status: "200"
@@ -289,6 +351,18 @@ def get_projects():
                 projectRequirements: "Develop an intelligent recommendation system supporting multiple algorithms."
                 requiredSkills: "Python, Machine Learning"
                 pdfFile: "/api/files/1751360465_-.pdf"
+                pdf: "JVBERi0xLjQKJcOkw7zDtsO..."
+                updatetime: "2024-07-01T22:34:56+10:00"
+                final_score: "0.95"
+                match_score: "0.85"
+                complementarity_score: "0.90"
+                topGroups:
+                  - groupName: "Team Alpha"
+                    score: 0.95
+                  - groupName: "Team Beta"
+                    score: 0.92
+                  - groupName: "Team Gamma"
+                    score: 0.90
               - projectNumber: "2"
                 projectTitle: "Big Data Analytics Platform"
                 clientName: "Alibaba"
@@ -296,6 +370,18 @@ def get_projects():
                 projectRequirements: "Build a big data analytics platform with real-time data processing capabilities."
                 requiredSkills: "Java, Hadoop, Spark"
                 pdfFile: "/api/files/1751360465_-.pdf"
+                pdf: "JVBERi0xLjQKJcOkw7zDtsO..."
+                updatetime: "2024-07-01T22:34:56+10:00"
+                final_score: "0.88"
+                match_score: "0.80"
+                complementarity_score: "0.85"
+                topGroups:
+                  - groupName: "Team Alpha"
+                    score: 0.88
+                  - groupName: "Team Beta"
+                    score: 0.85
+                  - groupName: "Team Gamma"
+                    score: 0.80
       401:
         description: 未授权或token无效
     """
@@ -309,6 +395,96 @@ def get_projects():
     return jsonify({
         'status': '200',
         'projects': projects
+    })
+
+
+@project_bp.route('/project/<int:projectNumber>', methods=['GET'])
+def get_project_by_number(projectNumber):
+    """
+    获取单个项目详情
+    ---
+    tags:
+      - 项目
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+        description: Bearer token
+      - name: projectNumber
+        in: path
+        type: integer
+        required: true
+        description: 项目编号
+    responses:
+      200:
+        description: 获取成功
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: "200"
+            projectNumber:
+              type: integer
+              example: 1
+            projectTitle:
+              type: string
+              example: "xxxxx"
+            clientName:
+              type: string
+              example: "xxxx"
+            groupCapacity:
+              type: integer
+              example: 3
+            projectRequirements:
+              type: string
+              example: "xxxx"
+            requiredSkills:
+              type: string
+              example: "xxx"
+            pdfFile:
+              type: string
+              example: "/api/files/project/xxx.pdf"
+            updatetime:
+              type: string
+              example: "2024-07-01T22:34:56+10:00"
+        examples:
+          application/json:
+            status: "200"
+            projectNumber: 1
+            projectTitle: "AI Intelligent Recommendation System"
+            clientName: "Tencent"
+            groupCapacity: 3
+            projectRequirements: "Develop an intelligent recommendation system supporting multiple algorithms."
+            requiredSkills: "Python, Machine Learning"
+            pdfFile: "/api/files/project/1751360465_-.pdf"
+            updatetime: "2024-07-01T22:34:56+10:00"
+      401:
+        description: 未授权或token无效
+      404:
+        description: 项目不存在
+    """
+    token = get_token_from_header()
+    if not token:
+        return jsonify({'error': '未授权'}), 401
+    payload = verify_token(token)
+    if not payload:
+        return jsonify({'error': 'token无效'}), 401
+    from . import service as project_service
+    project = project_service.get_project_by_number(projectNumber)
+    if not project:
+        return jsonify({'error': '项目不存在'}), 404
+    return jsonify({
+        'status': '200',
+        'projectNumber': project.project_number,
+        'projectTitle': project.project_title,
+        'clientName': project.client_name,
+        'groupCapacity': project.group_capacity,
+        'projectRequirements': project.project_requirements,
+        'requiredSkills': project.required_skills,
+        'pdfFile': project.pdf_file,
+        'updatetime': convert_to_local_time(project.updated_at)
     })
 
 

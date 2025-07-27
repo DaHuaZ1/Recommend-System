@@ -77,8 +77,8 @@ def parse_docx(file):
 
 def extract_info_from_text(text):
     """
-    从文本中提取关键信息
-    这里使用简单的规则，实际项目中可能需要更复杂的算法
+    从英文文本中提取关键信息
+    优先用关键词匹配，否则用正则和启发式推断
     """
     lines = text.split('\n')
     info = {
@@ -88,46 +88,61 @@ def extract_info_from_text(text):
         'skill': ''
     }
     import re
-    email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
-    i = 0
-    while i < len(lines):
-        line = lines[i].strip()
-        if not line:
-            i += 1
+    email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}'
+    skill_keywords = ['python', 'java', 'c++', 'c#', 'sql', 'html', 'css', 'js', 'javascript', 'machine learning', 'deep learning', 'data analysis', 'frontend', 'backend', 'linux', 'git', 'docker', 'cloud', 'tensorflow', 'pytorch']
+    major_keywords = ['computer science', 'software', 'engineering', 'information', 'automation', 'electrical', 'mathematics', 'physics', 'ai', 'artificial intelligence', 'data science', 'cybersecurity', 'network', 'informatics']
+
+    # 全局找邮箱
+    email_match = re.search(email_pattern, text, re.IGNORECASE)
+    if email_match:
+        info['email'] = email_match.group()
+
+    # 逐行找Name、Major、Skill关键词，否则用启发式
+    for idx, line in enumerate(lines):
+        l = line.strip()
+        if not l:
             continue
-        # 查找邮箱
-        email_match = re.search(email_pattern, line)
-        if email_match and not info['email']:
-            info['email'] = email_match.group()
-        # 查找英文/中文姓名
+        # Name: xxx
         if not info['name']:
-            # 1. Name: xxx
-            if 'Name:' in line:
-                value = line.split('Name:')[-1].strip()
-                if not value and i+1 < len(lines):
-                    value = lines[i+1].strip()
-                if value:
-                    info['name'] = value
-            # 2. 中文名
-            if not info['name']:
-                name_match = re.search(r'[\u4e00-\u9fa5]{2,4}', line)
-                if name_match:
-                    info['name'] = name_match.group()
-        # 查找专业
+            m = re.match(r'Name[:：]?\s*([A-Za-z .-]+)', l)
+            if m:
+                info['name'] = m.group(1).strip()
+        # Major: xxx
         if not info['major']:
-            # 1. Major: xxx
-            if 'Major:' in line:
-                value = line.split('Major:')[-1].strip()
-                if not value and i+1 < len(lines):
-                    value = lines[i+1].strip()
-                if value:
-                    info['major'] = value
-            # 2. 中文"专业"
-            if not info['major'] and '专业' in line:
-                info['major'] = line
-        # 查找技能
+            m = re.match(r'Major[:：]?\s*([A-Za-z .-]+)', l)
+            if m:
+                info['major'] = m.group(1).strip()
+        # Skills: xxx
         if not info['skill']:
-            if any(keyword in line.lower() for keyword in ['技能', 'skill', '技术栈']):
-                info['skill'] = line
-        i += 1
+            m = re.match(r'Skills?[:：]?\s*([A-Za-z0-9,./+\- ]+)', l, re.IGNORECASE)
+            if m:
+                info['skill'] = m.group(1).strip()
+
+    # 启发式补全英文名（首行大写单词，且不是邮箱/技能/专业）
+    if not info['name']:
+        for l in lines:
+            l = l.strip()
+            if l and not re.search(email_pattern, l) and len(l.split()) <= 4:
+                # 只包含字母和空格，且首字母大写
+                if re.match(r'^[A-Z][a-zA-Z .-]+$', l):
+                    info['name'] = l
+                    break
+    # 启发式补全专业
+    if not info['major']:
+        for l in lines:
+            for kw in major_keywords:
+                if kw in l.lower():
+                    info['major'] = kw
+                    break
+            if info['major']:
+                break
+    # 启发式补全技能
+    if not info['skill']:
+        found_skills = []
+        for l in lines:
+            for kw in skill_keywords:
+                if kw in l.lower() and kw not in found_skills:
+                    found_skills.append(kw)
+        if found_skills:
+            info['skill'] = ','.join(found_skills)
     return info 

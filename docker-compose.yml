@@ -26,6 +26,7 @@ services:
       FLASK_APP: app.py
       FLASK_ENV: development
       FLASK_DEBUG: 1
+      TZ: Australia/Sydney
       MYSQL_HOST: 182.92.72.100
       MYSQL_PORT: 3306
       MYSQL_USER: cakeuser

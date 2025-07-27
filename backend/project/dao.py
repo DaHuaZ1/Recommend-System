@@ -1,12 +1,85 @@
 from models.project import Project
 from models.user import db
+from datetime import datetime, timezone, timedelta
+import os
+import base64
+
+def convert_to_local_time(time_obj):
+    """将时间对象转换为澳洲东部时间字符串"""
+    if not time_obj:
+        return None
+    
+    # 如果时间对象没有时区信息，假设它是澳洲时间
+    if time_obj.tzinfo is None:
+        australia_tz = timezone(timedelta(hours=10))
+        time_obj = time_obj.replace(tzinfo=australia_tz)
+    
+    # 转换为澳洲东部时间
+    australia_tz = timezone(timedelta(hours=10))
+    local_time = time_obj.astimezone(australia_tz)
+    return local_time.isoformat()
+
+def get_pdf_base64(pdf_file_path):
+    """
+    读取PDF文件并转换为base64编码
+    Args:
+        pdf_file_path: str, PDF文件路径
+    Returns:
+        str: base64编码的PDF数据，如果文件不存在则返回None
+    """
+    if not pdf_file_path:
+        return None
+    
+    try:
+        # 从API路径中提取文件名
+        if pdf_file_path.startswith('/api/files/project/'):
+            filename = pdf_file_path.replace('/api/files/project/', '')
+        else:
+            filename = pdf_file_path
+        
+        # 构建完整的文件路径
+        staff_project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../staff_project'))
+        full_path = os.path.join(staff_project_dir, filename)
+        
+        # 检查文件是否存在
+        if not os.path.exists(full_path):
+            print(f"PDF文件不存在: {full_path}")
+            return None
+        
+        # 读取文件并转换为base64
+        with open(full_path, 'rb') as pdf_file:
+            pdf_data = pdf_file.read()
+            pdf_base64 = base64.b64encode(pdf_data).decode('utf-8')
+            return pdf_base64
+            
+    except Exception as e:
+        print(f"读取PDF文件失败: {e}")
+        return None
 
 # 项目相关数据库操作（目前为模拟数据，后续可接数据库）
 def get_all_projects():
     # 从数据库查询所有项目
     projects = Project.query.all()
     result = []
+    from models.group_project_recommendation import GroupProjectRecommendation
+    from models.group import Group
     for p in projects:
+        # 查询该项目推荐分数前三的组
+        recs = GroupProjectRecommendation.query.filter_by(project_id=p.id).order_by(GroupProjectRecommendation.final_score.desc()).limit(3).all()
+        top_groups = []
+        for rec in recs:
+            group = Group.query.get(rec.group_id)
+            top_groups.append({
+                'groupName': group.group_name if group else None,
+                'score': rec.final_score
+            })
+        
+        # 获取该项目的三个分数（取最高分的记录）
+        top_rec = GroupProjectRecommendation.query.filter_by(project_id=p.id).order_by(GroupProjectRecommendation.final_score.desc()).first()
+        
+        # 获取PDF二进制数据
+        pdf_base64 = get_pdf_base64(p.pdf_file)
+        
         result.append({
             "projectNumber": p.project_number,
             "projectTitle": p.project_title,
@@ -14,7 +87,13 @@ def get_all_projects():
             "groupCapacity": p.group_capacity,
             "projectRequirements": p.project_requirements,
             "requiredSkills": p.required_skills,
-            "pdfFile": p.pdf_file
+            "pdfFile": p.pdf_file,
+            "pdf": pdf_base64,  # 新增：PDF二进制数据（base64编码）
+            "updatetime": convert_to_local_time(p.updated_at),
+            "topGroups": top_groups,
+            "final_score": str(top_rec.final_score) if top_rec and top_rec.final_score else None,
+            "match_score": None,  # 暂时设为None，等数据库字段添加后再启用
+            "complementarity_score": None  # 暂时设为None，等数据库字段添加后再启用
         })
     return result
 
@@ -48,8 +127,8 @@ def save_project_to_db(project_info, pdf_file):
             pdf_file=pdf_file
         )
         db.session.add(project)
-    db.session.commit()
-    return project
+        db.session.commit()
+    return project 
 
 def upsert_project_by_number(info):
     """
@@ -66,6 +145,7 @@ def upsert_project_by_number(info):
         project.group_capacity = info['groupCapacity']
         project.project_requirements = info['projectRequirements']
         project.required_skills = info['requiredSkills']
+        project.pdf_file = info.get('pdfFile', project.pdf_file)
     else:
         project = Project(
             project_number=info['projectNumber'],
@@ -91,7 +171,17 @@ def delete_project_by_number(project_number):
     project = Project.query.filter_by(project_number=project_number).first()
     if project:
         from models.user import db
+        # 先删除依赖表中的相关数据
+        from models.group_project_recommendation import GroupProjectRecommendation
+        GroupProjectRecommendation.query.filter_by(project_id=project.id).delete()
         db.session.delete(project)
         db.session.commit()
         return True
-    return False 
+    return False
+
+def get_project_by_number(project_number):
+    """
+    根据 project_number 查询单个项目
+    Returns: Project 实例或 None
+    """
+    return Project.query.filter_by(project_number=project_number).first() 

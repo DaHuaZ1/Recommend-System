@@ -11,6 +11,7 @@ from models import group
 from models import project
 from group.controller import group_bp
 from project.controller import project_bp
+from recommend.controller import recommend_bp
 
 
 def create_app():
@@ -24,7 +25,7 @@ def create_app():
     # 创建Flask应用实例
     app = Flask(__name__)
 
-    # 从Config类加载所有配置
+    # 从Config类加载所有配置 
     # 包括数据库连接、JWT密钥、教师秘钥等
     app.config.from_object(Config)
 
@@ -39,6 +40,7 @@ def create_app():
     app.register_blueprint(resume_bp, url_prefix='/api')
     app.register_blueprint(group_bp, url_prefix='/api')
     app.register_blueprint(project_bp, url_prefix='/api')
+    app.register_blueprint(recommend_bp, url_prefix='/api')
 
     # 在应用上下文中创建数据库表
     # 如果表不存在，会自动创建
