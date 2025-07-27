@@ -60,7 +60,9 @@ const HomeStf = () => {
         throw new Error('Network response was not ok');
       }
       const data = await res.json();
-      const all = data.projects || [];
+      const all = (data.projects || []).sort((a, b) => {
+        return parseInt(a.projectNumber) - parseInt(b.projectNumber);
+      });
       setProjects(all);
       setFilteredProjects(all); // 初始化时显示所有项目
     } catch (error) {
@@ -219,7 +221,7 @@ const HomeStf = () => {
         {projects.length > 0 ? (
           filteredProjects.length > 0 ? (
             filteredProjects.map((project, index) => (
-              <ProjectSingle key={index} project={project} />
+              <ProjectSingle key={index} project={project} delay={index * 100} />
             ))
           ) : (
             <Typography variant="body2" color="text.secondary" align="center">

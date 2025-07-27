@@ -12,10 +12,11 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import dayjs from 'dayjs';
+import Slide from "@mui/material/Slide";
 
 import backendURL from "../backendURL";
 
-export default function ProjectSingle({ project }) {
+export default function ProjectSingle({ project, delay = 0 }) {
   const [open, setOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -142,40 +143,49 @@ export default function ProjectSingle({ project }) {
   return (
     <>
       {/* 项目卡片 */}
-      <Paper
-        elevation={3}
-        onClick={handleOpen}
-        sx={{
-          p: 3,
-          mb: 3,
-          borderRadius: 3,
-          display: "flex",
-          alignItems: "center",
-          cursor: "pointer",
-          bgcolor: "#f3f6ff",
-          transition: "background 0.2s",
-          "&:hover": { bgcolor: "#eaf0ff" }
-        }}
+      <Slide
+        direction="left"
+        in={true}
+        mountOnEnter
+        unmountOnExit
+        timeout={{ enter: 500, exit: 300 }}
+        style={{ transitionDelay: `${delay}ms` }}
       >
-        <Box sx={{ flexGrow: 1 }}>
-          <Typography variant="h6" fontWeight={700}>
-            {project.projectNumber
-              ? `Project ${project.projectNumber}`
-              : "Project"}
-          </Typography>
-          <Typography
-            color="text.secondary"
-            sx={{
-              maxWidth: "600px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap"
-            }}
-          >
-            {project.projectTitle || "Project Title"}
-          </Typography>
-        </Box>
-      </Paper>
+        <Paper
+          elevation={3}
+          onClick={handleOpen}
+          sx={{
+            p: 3,
+            mb: 3,
+            borderRadius: 3,
+            display: "flex",
+            alignItems: "center",
+            cursor: "pointer",
+            bgcolor: "#f3f6ff",
+            transition: "background 0.2s",
+            "&:hover": { bgcolor: "#eaf0ff" }
+          }}
+        >
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="h6" fontWeight={700}>
+              {project.projectNumber
+                ? `Project ${project.projectNumber}`
+                : "Project"}
+            </Typography>
+            <Typography
+              color="text.secondary"
+              sx={{
+                maxWidth: "600px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+              }}
+            >
+              {project.projectTitle || "Project Title"}
+            </Typography>
+          </Box>
+        </Paper>
+      </Slide>
 
       {/* 详情弹窗 */}
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
