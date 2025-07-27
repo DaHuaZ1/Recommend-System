@@ -298,7 +298,7 @@ def get_projects():
                     example: "2024-07-01T12:34:56.789Z"
                   topGroups:
                     type: array
-                    description: "推荐分数最高的前三个组及其分数"
+                    description: "推荐分数最高的前N个组及其分数（N = 项目容量groupCapacity）"
                     items:
                       type: object
                       properties:
@@ -342,6 +342,8 @@ def get_projects():
                     score: 0.85
                   - groupName: "Team Gamma"
                     score: 0.80
+                  - groupName: "Team Delta"
+                    score: 0.75
       401:
         description: 未授权或token无效
     """

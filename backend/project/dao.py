@@ -9,8 +9,14 @@ def get_all_projects():
     from models.group_project_recommendation import GroupProjectRecommendation
     from models.group import Group
     for p in projects:
-        # 查询该项目推荐分数前三的组
-        recs = GroupProjectRecommendation.query.filter_by(project_id=p.id).order_by(GroupProjectRecommendation.final_score.desc()).limit(3).all()
+        # 根据项目容量确定要返回的推荐组数量
+        try:
+            group_capacity = int(p.group_capacity)
+        except (ValueError, TypeError):
+            group_capacity = 3  # 默认值
+        
+        # 查询该项目推荐分数最高的前N个组（N = group_capacity）
+        recs = GroupProjectRecommendation.query.filter_by(project_id=p.id).order_by(GroupProjectRecommendation.final_score.desc()).limit(group_capacity).all()
         top_groups = []
         for rec in recs:
             group = Group.query.get(rec.group_id)
