@@ -111,24 +111,43 @@ export default function ProfilePageStd() {
 
       <Box
         sx={{
-          mt: 6,
           display: 'flex',
           justifyContent: 'center',
           px: 2,
+          minHeight: 'calc(100vh - 64px)',
+          background:
+              'linear-gradient(135deg, #e6fde3ff 0%, #ffe4e0ff 100%)',
         }}
       >
         <Card
           sx={{
+            mt: 6,
             width: '100%',
             maxWidth: 720,
             borderRadius: 3,
             boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+            height: '412.5px',
           }}
         >
           <CardContent sx={{ p: 4 }}>
-            <Typography variant="h6" fontWeight={600} mb={3}>
-              Personal Information
-            </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 3,
+              }}
+            >
+              <Typography variant="h6" fontWeight={600}>
+                Personal Information
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => navigate('/student/upload')}
+              >
+                Reupload Resume
+              </Button>
+            </Box>
 
             <Stack spacing={3}>
               <TextField
