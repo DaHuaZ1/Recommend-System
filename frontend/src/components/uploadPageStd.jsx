@@ -41,6 +41,7 @@ export default function UploadStd() {
   const formRef = useRef(null);
 
   const token = localStorage.getItem("token");
+  const showBackButton = localStorage.getItem("Resume") === "true";
 
   const navigate = useNavigate();
 
@@ -323,6 +324,13 @@ export default function UploadStd() {
 
   return (
     <Stack spacing={4} sx={{ px: { xs: 2, sm: 6 }, py: 4, alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+      {showBackButton && (
+        <Box sx={{ width: { xs: "100%", sm: 600 }, display: "flex", justifyContent: "flex-start", mb: 2 }}>
+          <Button variant="outlined" color="error" onClick={() => navigate(-1)}>
+            Back
+          </Button>
+        </Box>
+      )}
       {/* 隐藏的文件输入 */}
       <input
         ref={fileInputRef}
