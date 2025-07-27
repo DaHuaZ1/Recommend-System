@@ -93,15 +93,15 @@ export default function GroupStf() {
     };
 
     const handleDownload = () => {
-        if (project.pdfFile) {
-            window.open(backendURL + project.pdfFile, "_blank");
+        if (projectDetails.pdfFile) {
+            window.open(backendURL + projectDetails.pdfFile, "_blank");
         }
     };
 
     useEffect(() => {
         if (!localStorage.getItem('token')) return navigate('/staff/login');
         fetchGroups();
-    }, [navigate]);
+    }, []);
 
     return (
         <>
