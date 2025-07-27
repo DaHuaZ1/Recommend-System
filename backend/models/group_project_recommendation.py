@@ -6,6 +6,7 @@ def get_australia_time():
     australia_tz = timezone(timedelta(hours=10))  # UTC+10
     return datetime.now(australia_tz)
 
+
 class GroupProjectRecommendation(db.Model):
     __tablename__ = 'group_project_recommendation'
     id = db.Column(db.Integer, primary_key=True)
@@ -16,6 +17,7 @@ class GroupProjectRecommendation(db.Model):
     match_score = db.Column(db.Float, nullable=True)  # 匹配分数
     complementarity_score = db.Column(db.Float, nullable=True)  # 互补分数
     created_at = db.Column(db.DateTime, default=get_australia_time)
+
     # 可选扩展字段
     # algo_version = db.Column(db.String(32), nullable=True)
     # extra_info = db.Column(db.Text, nullable=True) 

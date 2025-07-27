@@ -73,13 +73,11 @@ def get_all_projects():
                 'groupName': group.group_name if group else None,
                 'score': rec.final_score
             })
-        
         # 获取该项目的三个分数（取最高分的记录）
         top_rec = GroupProjectRecommendation.query.filter_by(project_id=p.id).order_by(GroupProjectRecommendation.final_score.desc()).first()
         
         # 获取PDF二进制数据
         pdf_base64 = get_pdf_base64(p.pdf_file)
-        
         result.append({
             "projectNumber": p.project_number,
             "projectTitle": p.project_title,

@@ -1,35 +1,57 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from 'react';
+import { Routes, Route, BrowserRouter } from 'react-router-dom';
+
+// Import page and UI components
+import HomeStd from './components/HomepageStd';
+import LoginStd from './components/loginPageStd';
+import Signup from './components/registerPage';
+import UploadStd from './components/uploadPageStd';
+import ProfilePageStd from './components/profilePageStd';
+import RecommendStd from './components/recommendStd';
+import GroupStd from './components/groupPageStd';
+import LoginStf from './components/loginPageStf';
+import HomeStf from './components/HomepageStf';
+import UploadStf from './components/uploadPageStf';
+import GroupStf from './components/groupPageStf';
+import PdfViewer from './components/pdfView';
+import BackToTop from './components/backToTop';
+
+// Import MUI components
+import CssBaseline from '@mui/material/CssBaseline';
+
+// Import custom components
+import ScrollToTop from './components/scrollToTop';
 
 function App() {
-  const [count, setCount] = useState(0)
+
+  const [token, setToken] = useState(localStorage.getItem('token'));
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <BrowserRouter>
+      <CssBaseline />
+      <ScrollToTop />
+      <BackToTop />
+      <Routes>
+        <Route path="/" element={<LoginStd setToken={setToken}/>} />
+        <Route path="/student/index" element={<HomeStd token={token}/>} />
+        <Route path="/student/login" element={<LoginStd setToken={setToken} />} />
+        <Route path='/student/upload' element={<UploadStd token={token} />} />
+        <Route path="/student/profile" element={<ProfilePageStd token={token} />} />
+        <Route path="/student/group/recommend" element={<RecommendStd token={token} />} />
+        <Route path="/student/group" element={<GroupStd token={token} />} />
+        <Route path="/pdf-viewer" element={<PdfViewer />} />
+
+        {/* Staff routes */}
+        <Route path="/staff/index" element={<HomeStf token={token} />} />
+        <Route path="/staff/login" element={<LoginStf setToken={setToken} />} />
+        <Route path='/staff/upload' element={<UploadStf token={token} />} />
+        <Route path="/staff/group" element={<GroupStf token={token} />} />
+
+        {/* Signup route */}
+        <Route path="/signup" element={<Signup setToken={setToken} />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App
