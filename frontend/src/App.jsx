@@ -13,6 +13,8 @@ import LoginStf from './components/loginPageStf';
 import HomeStf from './components/HomepageStf';
 import UploadStf from './components/uploadPageStf';
 import GroupStf from './components/groupPageStf';
+import PdfViewer from './components/pdfView';
+import BackToTop from './components/backToTop';
 
 // Import MUI components
 import CssBaseline from '@mui/material/CssBaseline';
@@ -28,6 +30,7 @@ function App() {
     <BrowserRouter>
       <CssBaseline />
       <ScrollToTop />
+      <BackToTop />
       <Routes>
         <Route path="/" element={<LoginStd setToken={setToken}/>} />
         <Route path="/student/index" element={<HomeStd token={token}/>} />
@@ -36,6 +39,7 @@ function App() {
         <Route path="/student/profile" element={<ProfilePageStd token={token} />} />
         <Route path="/student/group/recommend" element={<RecommendStd token={token} />} />
         <Route path="/student/group" element={<GroupStd token={token} />} />
+        <Route path="/pdf-viewer" element={<PdfViewer />} />
 
         {/* Staff routes */}
         <Route path="/staff/index" element={<HomeStf token={token} />} />
