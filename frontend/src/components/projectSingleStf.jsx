@@ -189,23 +189,24 @@ export default function ProjectSingle({ project, delay = 0 }) {
           </Box>
 
           {/* 右侧：Top Groups */}
-          {project.topGroups && project.topGroups.length > 0 && (
-            <Box
-              sx={{
-                width: 200, // 固定宽度以对齐
-                ml: 'auto',
-                textAlign: 'right',
-                alignSelf: 'flex-start'
-              }}
+          <Box
+            sx={{
+              width: 200,
+              ml: 'auto',
+              textAlign: 'right',
+              alignSelf: 'flex-start'
+            }}
+          >
+            <Typography
+              variant="body2"
+              fontWeight={600}
+              sx={{ mb: 0.5 }}
             >
-              <Typography
-                variant="body2"
-                fontWeight={600}
-                sx={{ mb: 0.5 }}
-              >
-                Top Groups:
-              </Typography>
-              {project.topGroups
+              Top Groups:
+            </Typography>
+
+            {project.topGroups && project.topGroups.length > 0 ? (
+              project.topGroups
                 .slice(0, project.groupCapacity)
                 .map((group, idx) => (
                   <Typography
@@ -215,9 +216,13 @@ export default function ProjectSingle({ project, delay = 0 }) {
                   >
                     {group.groupName} - {group.score}
                   </Typography>
-                ))}
-            </Box>
-          )}
+                ))
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                None
+              </Typography>
+            )}
+          </Box>
         </Paper>
       </Slide >
 
