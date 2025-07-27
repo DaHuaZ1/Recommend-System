@@ -11,12 +11,11 @@ import {
   DialogActions,
   Button,
   IconButton,
-  Slide
+  Slide,
+  Tooltip
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { useLocation } from "react-router-dom"; // 新增
-// utils
-import backendURL from "../backendURL";
+import { useLocation, useNavigate } from "react-router-dom"; 
 
 export default function ProjectSingle({ project, delay = 0 }) {
   const [open, setOpen] = useState(false);
@@ -25,9 +24,18 @@ export default function ProjectSingle({ project, delay = 0 }) {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  const handleDownload = () => {
-    if (project.pdfFile) {
-      window.open(backendURL + project.pdfFile, "_blank");
+  const navigate = useNavigate();
+  const handleCheckDetails = () => {
+    if (project.pdf) {
+      // window.open(backendURL + project.pdfFile, "_blank");
+      const binary = atob(project.pdf);
+      const uint8 = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        uint8[i] = binary.charCodeAt(i);
+      }
+      navigate("/pdf-viewer", {
+        state: { pdfData: uint8}
+      });
     }
   };
 
@@ -84,48 +92,53 @@ export default function ProjectSingle({ project, delay = 0 }) {
 
           {/* 仅在 /student/group/recommend 页面显示进度环 */}
           {pathname === "/student/group/recommend" && (
-            <Box sx={{ position: "relative", width: 60, height: 60, mr: 2.5, flexShrink: 0 }}>
-              {/* Background track */}
-              <CircularProgress
-                variant="determinate"
-                value={100}
-                size={60}
-                thickness={4}
-                sx={{ color: 'grey.300', position: 'absolute', top: 0, left: 0 }}
-              />
-              {/* Animated foreground */}
-              <CircularProgress
-                variant="determinate"
-                value={percentage}
-                size={60}
-                thickness={4}
-                sx={{
-                  color: ringColor,
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  transform: 'rotate(-90deg)',
-                  transition: 'all 0.5s ease-out',
-                  '& .MuiCircularProgress-circle': {
-                    strokeLinecap: 'round'
-                  }
-                }}
-              />
-              {/* Percentage label */}
-              <Box
-                sx={{
-                  position: "absolute",
-                  inset: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center"
-                }}
-              >
-                <Typography variant="subtitle2" fontWeight={700} color={ringColor}>
-                  {`${percentage}%`}
-                </Typography>
+            <Tooltip
+              title={`The final score is derived from complementarity score ${project.complementarity_score * 100}% + match scores ${project.match_score * 100}%.`}
+              placement="top"
+            >
+              <Box sx={{ position: "relative", width: 60, height: 60, mr: 2.5, flexShrink: 0 }}>
+                {/* Background track */}
+                <CircularProgress
+                  variant="determinate"
+                  value={100}
+                  size={60}
+                  thickness={4}
+                  sx={{ color: 'grey.300', position: 'absolute', top: 0, left: 0 }}
+                />
+                {/* Animated foreground */}
+                <CircularProgress
+                  variant="determinate"
+                  value={percentage}
+                  size={60}
+                  thickness={4}
+                  sx={{
+                    color: ringColor,
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    transform: 'rotate(-90deg)',
+                    transition: 'all 0.5s ease-out',
+                    '& .MuiCircularProgress-circle': {
+                      strokeLinecap: 'round'
+                    }
+                  }}
+                />
+                {/* Percentage label */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  <Typography variant="subtitle2" fontWeight={700} color={ringColor}>
+                    {`${percentage}%`}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
+            </Tooltip>
           )}
         </Paper>
       </Slide>
@@ -197,8 +210,8 @@ export default function ProjectSingle({ project, delay = 0 }) {
         </DialogContent>
 
         <DialogActions sx={{ justifyContent: "center", py: 2 }}>
-          <Button variant="contained" onClick={handleDownload}>
-            Download PDF
+          <Button variant="contained" onClick={handleCheckDetails}>
+            Check All Details
           </Button>
         </DialogActions>
       </Dialog>
