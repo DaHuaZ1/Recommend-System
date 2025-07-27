@@ -159,19 +159,22 @@ export default function ProjectSingle({ project, delay = 0 }) {
             mb: 3,
             borderRadius: 3,
             display: "flex",
-            alignItems: "center",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
             cursor: "pointer",
             bgcolor: "#f3f6ff",
             transition: "background 0.2s",
             "&:hover": { bgcolor: "#eaf0ff" }
           }}
         >
-          <Box sx={{ flexGrow: 1 }}>
+          {/* 左侧：项目信息 */}
+          <Box sx={{ flex: 1, pr: 2 }}>
             <Typography variant="h6" fontWeight={700}>
               {project.projectNumber
                 ? `Project ${project.projectNumber}`
                 : "Project"}
             </Typography>
+
             <Typography
               color="text.secondary"
               sx={{
@@ -184,11 +187,42 @@ export default function ProjectSingle({ project, delay = 0 }) {
               {project.projectTitle || "Project Title"}
             </Typography>
           </Box>
+
+          {/* 右侧：Top Groups */}
+          {project.topGroups && project.topGroups.length > 0 && (
+            <Box
+              sx={{
+                width: 200, // 固定宽度以对齐
+                ml: 'auto',
+                textAlign: 'right',
+                alignSelf: 'flex-start'
+              }}
+            >
+              <Typography
+                variant="body2"
+                fontWeight={600}
+                sx={{ mb: 0.5 }}
+              >
+                Top Groups:
+              </Typography>
+              {project.topGroups
+                .slice(0, project.groupCapacity)
+                .map((group, idx) => (
+                  <Typography
+                    key={idx}
+                    variant="body2"
+                    sx={{ color: '#666' }}
+                  >
+                    {group.groupName} - {group.score}
+                  </Typography>
+                ))}
+            </Box>
+          )}
         </Paper>
-      </Slide>
+      </Slide >
 
       {/* 详情弹窗 */}
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      < Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth >
         <IconButton
           onClick={handleClose}
           sx={{ position: "absolute", right: 8, top: 8 }}
@@ -367,10 +401,10 @@ export default function ProjectSingle({ project, delay = 0 }) {
           )}
         </DialogActions>
 
-      </Dialog>
+      </Dialog >
 
       {/* 删除确认弹窗 */}
-      <Dialog open={deleteDialogOpen} onClose={closeDeleteDialog}>
+      < Dialog open={deleteDialogOpen} onClose={closeDeleteDialog} >
         <DialogTitle>Delete Project?</DialogTitle>
         <DialogContent>
           <Typography>Are you sure you want to delete this project?</Typography>
@@ -381,7 +415,7 @@ export default function ProjectSingle({ project, delay = 0 }) {
             Confirm
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog >
     </>
   );
 }
