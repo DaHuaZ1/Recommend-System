@@ -2,6 +2,22 @@ from . import dao as project_dao
 from utils.project_utils import parse_project_pdf
 import os
 import traceback
+from datetime import datetime, timezone, timedelta
+
+def convert_to_local_time(time_obj):
+    """将时间对象转换为澳洲东部时间字符串"""
+    if not time_obj:
+        return None
+    
+    # 如果时间对象没有时区信息，假设它是澳洲时间
+    if time_obj.tzinfo is None:
+        australia_tz = timezone(timedelta(hours=10))
+        time_obj = time_obj.replace(tzinfo=australia_tz)
+    
+    # 转换为澳洲东部时间
+    australia_tz = timezone(timedelta(hours=10))
+    local_time = time_obj.astimezone(australia_tz)
+    return local_time.isoformat()
 
 def get_projects_service():
     return project_dao.get_all_projects()
@@ -35,7 +51,7 @@ def save_projects_from_files(files, upload_dir):
                 'projectRequirements': project.project_requirements,
                 'requiredSkills': project.required_skills,
                 'pdfFile': pdf_api_path,
-                'updatetime': project.updated_at.isoformat() if project.updated_at else None,
+                'updatetime': convert_to_local_time(project.updated_at),
             })
         except Exception as e:
             print("[FATAL] 数据库写入异常:", e, flush=True)

@@ -1,5 +1,10 @@
 from models.user import db
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+def get_australia_time():
+    """获取澳洲东部时间（AEST/AEDT）"""
+    australia_tz = timezone(timedelta(hours=10))  # UTC+10
+    return datetime.now(australia_tz)
 
 class Project(db.Model):
     __tablename__ = 'projects'
@@ -11,4 +16,4 @@ class Project(db.Model):
     project_requirements = db.Column(db.Text, nullable=False)
     required_skills = db.Column(db.Text, nullable=False)
     pdf_file = db.Column(db.String(1024), nullable=True)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)    
+    updated_at = db.Column(db.DateTime, default=get_australia_time, onupdate=get_australia_time)    

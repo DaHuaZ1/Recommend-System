@@ -15,7 +15,8 @@ def build_group_members(emails):
         user = User.query.filter_by(email=email).first()
         resume = StudentResume.query.filter_by(user_id=user.id).first() if user else None
         name = resume.name if resume and resume.name else (user.username if user and user.username else email.split('@')[0])
-        members.append({'user_id': user.id, 'name': name, 'email': email})
+        skill = resume.skill if resume and resume.skill else ''
+        members.append({'user_id': user.id, 'name': name, 'email': email, 'skill': skill})
     return members
 
 def create_group_with_members(group_name, emails):

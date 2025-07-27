@@ -1,6 +1,10 @@
 # 使用官方Python基础镜像
 FROM python:3.10
 
+# 设置时区为澳洲东部时间
+ENV TZ=Australia/Sydney
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # 设置工作目录
 WORKDIR /app
 

@@ -13,7 +13,13 @@ def create_group_and_members(group_name, members):
     db.session.flush()  # 获取group.id
     group_member_objs = []
     for m in members:
-        group_member = GroupMember(group_id=group.id, user_id=m['user_id'], name=m['name'], email=m['email'])
+        group_member = GroupMember(
+            group_id=group.id, 
+            user_id=m['user_id'], 
+            name=m['name'], 
+            email=m['email'],
+            skill=m.get('skill', '')  # 添加技能字段
+        )
         db.session.add(group_member)
         group_member_objs.append(group_member)
     return group, group_member_objs

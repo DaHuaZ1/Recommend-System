@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, send_from_directory
 from utils.jwt_utils import verify_token
 from . import service as project_service
 import os
+from datetime import datetime, timezone, timedelta
 
 project_bp = Blueprint('project', __name__)
 
@@ -16,6 +17,21 @@ def get_token_from_header():
         return token
     except ValueError:
         return None
+
+def convert_to_local_time(time_obj):
+    """将时间对象转换为澳洲东部时间字符串"""
+    if not time_obj:
+        return None
+    
+    # 如果时间对象没有时区信息，假设它是澳洲时间
+    if time_obj.tzinfo is None:
+        australia_tz = timezone(timedelta(hours=10))
+        time_obj = time_obj.replace(tzinfo=australia_tz)
+    
+    # 转换为澳洲东部时间
+    australia_tz = timezone(timedelta(hours=10))
+    local_time = time_obj.astimezone(australia_tz)
+    return local_time.isoformat()
 
 @project_bp.route('/staff/projects', methods=['POST'])
 def upload_staff_projects():
@@ -148,7 +164,7 @@ def update_staff_projects():
                     type: string
                   updatetime:
                     type: string
-                    example: "2024-07-01T12:34:56.789Z"
+                    example: "2024-07-01T22:34:56+10:00"
       400:
         description: 请求参数错误
       401:
@@ -185,7 +201,7 @@ def update_staff_projects():
             'projectRequirements': project.project_requirements,
             'requiredSkills': project.required_skills,
             'pdfFile': project.pdf_file,
-            'updatetime': project.updated_at.isoformat() if project.updated_at else None,
+            'updatetime': convert_to_local_time(project.updated_at),
         })
     return jsonify({'status': '200', 'projects': updated_projects})
 
@@ -293,9 +309,25 @@ def get_projects():
                   pdfFile:
                     type: string
                     example: "/api/files/1751360465_-.pdf"
+                  pdf:
+                    type: string
+                    description: "PDF文件的base64编码二进制数据"
+                    example: "JVBERi0xLjQKJcOkw7zDtsO..."
                   updatetime:
                     type: string
-                    example: "2024-07-01T12:34:56.789Z"
+                    example: "2024-07-01T22:34:56+10:00"
+                  final_score:
+                    type: string
+                    description: "最终推荐分数"
+                    example: "0.95"
+                  match_score:
+                    type: string
+                    description: "匹配分数"
+                    example: "0.85"
+                  complementarity_score:
+                    type: string
+                    description: "互补分数"
+                    example: "0.90"
                   topGroups:
                     type: array
                     description: "推荐分数最高的前三个组及其分数"
@@ -319,7 +351,11 @@ def get_projects():
                 projectRequirements: "Develop an intelligent recommendation system supporting multiple algorithms."
                 requiredSkills: "Python, Machine Learning"
                 pdfFile: "/api/files/1751360465_-.pdf"
-                updatetime: "2024-07-01T12:34:56.789Z"
+                pdf: "JVBERi0xLjQKJcOkw7zDtsO..."
+                updatetime: "2024-07-01T22:34:56+10:00"
+                final_score: "0.95"
+                match_score: "0.85"
+                complementarity_score: "0.90"
                 topGroups:
                   - groupName: "Team Alpha"
                     score: 0.95
@@ -334,7 +370,11 @@ def get_projects():
                 projectRequirements: "Build a big data analytics platform with real-time data processing capabilities."
                 requiredSkills: "Java, Hadoop, Spark"
                 pdfFile: "/api/files/1751360465_-.pdf"
-                updatetime: "2024-07-01T12:34:56.789Z"
+                pdf: "JVBERi0xLjQKJcOkw7zDtsO..."
+                updatetime: "2024-07-01T22:34:56+10:00"
+                final_score: "0.88"
+                match_score: "0.80"
+                complementarity_score: "0.85"
                 topGroups:
                   - groupName: "Team Alpha"
                     score: 0.88
@@ -406,6 +446,20 @@ def get_project_by_number(projectNumber):
             pdfFile:
               type: string
               example: "/api/files/project/xxx.pdf"
+            updatetime:
+              type: string
+              example: "2024-07-01T22:34:56+10:00"
+        examples:
+          application/json:
+            status: "200"
+            projectNumber: 1
+            projectTitle: "AI Intelligent Recommendation System"
+            clientName: "Tencent"
+            groupCapacity: 3
+            projectRequirements: "Develop an intelligent recommendation system supporting multiple algorithms."
+            requiredSkills: "Python, Machine Learning"
+            pdfFile: "/api/files/project/1751360465_-.pdf"
+            updatetime: "2024-07-01T22:34:56+10:00"
       401:
         description: 未授权或token无效
       404:
@@ -429,7 +483,8 @@ def get_project_by_number(projectNumber):
         'groupCapacity': project.group_capacity,
         'projectRequirements': project.project_requirements,
         'requiredSkills': project.required_skills,
-        'pdfFile': project.pdf_file
+        'pdfFile': project.pdf_file,
+        'updatetime': convert_to_local_time(project.updated_at)
     })
 
 

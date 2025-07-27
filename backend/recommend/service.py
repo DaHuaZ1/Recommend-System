@@ -6,27 +6,28 @@ from sklearn.preprocessing import minmax_scale
 from models.project import Project
 from models.group import GroupMember
 
-# 设置远程 MySQL 数据库连接参数
+# #设置远程 MySQL 数据库连接参数
+# import os
 # os.environ['MYSQL_HOST'] = '182.92.72.100'
 # os.environ['MYSQL_PORT'] = '3306'
 # os.environ['MYSQL_USER'] = 'cakeuser'
 # os.environ['MYSQL_PASSWORD'] = '123456'
 # os.environ['MYSQL_DB'] = 'capstone_project'  # 数据库名
-# 创建 Flask 应用实例
+# #创建 Flask 应用实例
 # app = Flask(__name__)
-# 读取数据库连接信息
+# #读取数据库连接信息
 # mysql_host = os.environ.get('MYSQL_HOST', 'localhost')
 # mysql_port = os.environ.get('MYSQL_PORT', '3306')
 # mysql_user = os.environ.get('MYSQL_USER', 'root')
 # mysql_password = os.environ.get('MYSQL_PASSWORD', '')
 # mysql_db = os.environ.get('MYSQL_DB', 'test')
-# 配置 SQLAlchemy
+# #配置 SQLAlchemy
 # app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_db}'
 # app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# 初始化数据库
+# #初始化数据库
 # db = SQLAlchemy(app)
-# ========== 模型定义 ==========
+# #========== 模型定义 ==========
 # class GroupMember(db.Model):
 #     __tablename__ = 'group_members'
 #     id = db.Column(db.Integer, primary_key=True)
@@ -200,34 +201,123 @@ class RecommendService:
         """
         从数据库加载成员技能和项目技能数据，构造向量
         """
+        print("\n" + "="*80)
+        print("开始加载数据库数据...")
+        
         # 技能词表用于构建统一维度的向量
         all_skills = skill_keywords
+        print(f"技能词表维度: {len(all_skills)}")
 
-        # 查询组成员
+        # 查询所有组成员，按group_id分组
         group_members = GroupMember.query.all()
-        group_vectors = []
+        print(f"查询到 {len(group_members)} 个组成员")
+        
+        group_data = {}
         for member in group_members:
+            if member.group_id not in group_data:
+                group_data[member.group_id] = []
+            
+            # 分析组员技能
             skill_dict = analyze_skill_strength(member.skill or "")
             vector = [skill_dict.get(skill, 0) for skill in all_skills]
-            group_vectors.append(vector)
-        cls._group_skills = np.array(group_vectors)
+            
+            # 调试输出：显示组员技能分析结果
+            print(f"  组员 {member.name} (组{member.group_id}):")
+            print(f"    原始技能文本: {member.skill[:100] if member.skill else '无'}...")
+            print(f"    识别到的技能数量: {len(skill_dict)}")
+            if skill_dict:
+                print(f"    技能详情:")
+                for skill, level in sorted(skill_dict.items(), key=lambda x: x[1], reverse=True)[:5]:  # 只显示前5个最高级别技能
+                    print(f"      - {skill}: 级别{level}")
+                if len(skill_dict) > 5:
+                    print(f"      ... 还有 {len(skill_dict) - 5} 个技能")
+            else:
+                print(f"    警告: 未识别到任何技能")
+            print(f"    技能向量维度: {len(vector)}, 非零元素: {sum(1 for x in vector if x > 0)}")
+            print()
+            
+            group_data[member.group_id].append(vector)
+        
+        print(f"按组ID分组后，共有 {len(group_data)} 个不同的组")
+        
+        # 为每个组计算平均技能向量
+        cls._group_skills = {}
+        for group_id, vectors in group_data.items():
+            if vectors:  # 确保组内有成员
+                group_skills_array = np.array(vectors)
+                cls._group_skills[group_id] = group_skills_array
+                
+                # 计算组平均技能向量
+                avg_vector = np.mean(group_skills_array, axis=0)
+                non_zero_skills = [(skill, avg_vector[i]) for i, skill in enumerate(all_skills) if avg_vector[i] > 0]
+                non_zero_skills.sort(key=lambda x: x[1], reverse=True)
+                
+                print(f"   组 {group_id}: {len(vectors)} 个成员")
+                print(f"    组平均技能向量维度: {len(avg_vector)}")
+                print(f"    组平均技能向量非零元素: {len(non_zero_skills)}")
+                if non_zero_skills:
+                    print(f"    组平均技能 (前5个最高级别):")
+                    for skill, level in non_zero_skills[:5]:
+                        print(f"      - {skill}: 级别{level:.2f}")
+                    if len(non_zero_skills) > 5:
+                        print(f"      ... 还有 {len(non_zero_skills) - 5} 个技能")
+                print()
+        
+        print(f"成功加载 {len(cls._group_skills)} 个组的技能数据")
 
         # 查询项目
         projects = Project.query.all()
+        print(f"查询到 {len(projects)} 个项目")
+        
         project_vectors = []
         project_names = []
         project_ids = []
+        skipped_count = 0
         for project in projects:
             skill_dict = analyze_skill_strength(project.required_skills or "")
+            
+            # 调试输出：显示项目技能分析结果
+            print(f"  项目 {project.project_number} - {project.project_title[:50]}...:")
+            print(f"    原始技能要求: {project.required_skills[:100] if project.required_skills else '无'}...")
+            print(f"    识别到的技能数量: {len(skill_dict)}")
+            
             if len(skill_dict) < 3:
+                skipped_count += 1
+                print(f"    跳过: 技能数量不足 (需要>=3, 实际={len(skill_dict)})")
+                print()
                 continue  # 忽略技能太少的项目
+            
+            if skill_dict:
+                print(f"    技能详情:")
+                for skill, level in sorted(skill_dict.items(), key=lambda x: x[1], reverse=True)[:5]:  # 只显示前5个最高级别技能
+                    print(f"      - {skill}: 级别{level}")
+                if len(skill_dict) > 5:
+                    print(f"      ... 还有 {len(skill_dict) - 5} 个技能")
+            else:
+                print(f"    警告: 未识别到任何技能")
+            
             vector = [skill_dict.get(skill, 0) for skill in all_skills]
+            print(f"    技能向量维度: {len(vector)}, 非零元素: {sum(1 for x in vector if x > 0)}")
+            print()
+            
             project_vectors.append(vector)
             project_names.append(project.project_title)
             project_ids.append(project.id)
-        cls._project_skills = np.array(project_vectors)
-        cls._project_names = project_names
-        cls._project_ids = project_ids
+        
+        print(f"有效项目: {len(project_vectors)} 个，跳过技能不足项目: {skipped_count} 个")
+        
+        if len(project_vectors) == 0:
+            print("警告: 没有有效的项目数据！")
+            cls._project_skills = np.array([])
+            cls._project_names = []
+            cls._project_ids = []
+        else:
+            cls._project_skills = np.array(project_vectors)
+            cls._project_names = project_names
+            cls._project_ids = project_ids
+            print(f"项目数据加载完成，维度: {cls._project_skills.shape}")
+        
+        print("="*80)
 
     @classmethod
     def compute_group_vector(cls, group_skills):
@@ -256,59 +346,106 @@ class RecommendService:
         return np.mean(scores)
 
     @classmethod
-    def get_project_recommendations(cls, alpha=None, beta=None):
+    def get_project_recommendations(cls, group_id=None, alpha=None, beta=None):
+        """
+        获取项目推荐
+        Args:
+            group_id: 指定组ID，如果为None则返回所有组的推荐
+            alpha: 匹配度权重
+            beta: 互补度权重
+        """
+        print("\n" + "="*20)
+        print("开始项目推荐计算...")
+        print(f"权重设置: α={alpha or cls._ALPHA}, β={beta or cls._BETA}")
+        
         from sklearn.preprocessing import minmax_scale
         if alpha is None:
             alpha = cls._ALPHA
         if beta is None:
             beta = cls._BETA
 
-        group_vector = cls.compute_group_vector(cls._group_skills)
+        if group_id is not None:
+            # 为指定组计算推荐
+            print(f"为指定组 {group_id} 计算推荐")
+            result = cls._get_recommendations_for_group(group_id, alpha, beta)
+            print(f"组 {group_id} 推荐完成，共 {len(result)} 个项目")
+            return result
+        else:
+            # 为所有组计算推荐
+            print(f"为所有 {len(cls._group_skills)} 个组计算推荐")
+            all_recommendations = {}
+            for gid in cls._group_skills.keys():
+                print(f"\n正在处理组 {gid}...")
+                all_recommendations[gid] = cls._get_recommendations_for_group(gid, alpha, beta)
+                print(f"组 {gid} 完成，推荐 {len(all_recommendations[gid])} 个项目")
+            print(f"\n所有组推荐计算完成！")
+            return all_recommendations
 
-        # print("\n>>> 小组平均技能向量（所有维展示）:")
-        # print(group_vector[:])
+    @classmethod
+    def _get_recommendations_for_group(cls, group_id, alpha, beta):
+        """为指定组计算项目推荐"""
+        from sklearn.preprocessing import minmax_scale
+        
+        print(f"  开始为组 {group_id} 计算推荐...")
+        
+        if group_id not in cls._group_skills:
+            print(f"  组 {group_id} 不在技能数据中，跳过")
+            return []
+        
+        group_skills = cls._group_skills[group_id]
+        print(f"  组 {group_id} 有 {group_skills.shape[0]} 个成员，技能向量维度: {group_skills.shape[1]}")
+        
+        group_vector = cls.compute_group_vector(group_skills)
+        print(f"  组平均技能向量计算完成")
+
+        if len(cls._project_skills) == 0:
+            print(f"  没有项目数据，组 {group_id} 无法计算推荐")
+            return []
 
         match_scores = cls.compute_match_scores(group_vector, cls._project_skills)
-        # print("\n>>> 原始匹配度分数 (cosine similarity):")
-        # for i, score in enumerate(match_scores):
-        #     print(f"  {cls._project_names[i]} => {score:.4f}")
-
+        print(f"  匹配度分数计算完成，范围: [{match_scores.min():.4f}, {match_scores.max():.4f}]")
+        
         project_comp_scores = []
         for i, p in enumerate(cls._project_skills):
-            comp_score = cls.compute_project_aware_complementarity(cls._group_skills, p)
+            comp_score = cls.compute_project_aware_complementarity(group_skills, p)
             project_comp_scores.append(comp_score)
-            # print(f"  {cls._project_names[i]} 互补度: {comp_score:.4f}")
+        print(f"  互补度分数计算完成，范围: [{min(project_comp_scores):.4f}, {max(project_comp_scores):.4f}]")
 
-        # 只归一化互补度
+        # 归一化
         match_scores_norm = minmax_scale(match_scores)
         comp_scores_norm = minmax_scale(project_comp_scores)
+        print(f"  分数归一化完成")
 
-
-        # print("\n>>> 归一化后的互补度：")
-        # for i, s in enumerate(comp_scores_norm):
-        #     print(f"  {cls._project_names[i]} => {s:.4f}")
-
-        # 加权求和：匹配度不归一化，互补度归一化
+        # 加权求和
         weighted_match_scores = alpha * match_scores_norm
         weighted_comp_scores = beta * comp_scores_norm
         total_scores = weighted_match_scores + weighted_comp_scores
-        # 分数大于0.9的项减去0.3
+        # 分数大于0.9的项减去0.1
         total_scores = np.where(total_scores > 0.9, total_scores - 0.1, total_scores)
-        
-        # print("\n>>> 最终加权总分：")
-        # for i, s in enumerate(total_scores):
-        #     print(f"  {cls._project_names[i]} => {s:.4f}")
+        print(f"  加权总分计算完成，范围: [{total_scores.min():.4f}, {total_scores.max():.4f}]")
 
         # 排名
         ranked_indices = np.argsort(-total_scores)
         recommendations = []
+        print(f"  开始生成推荐排名...")
         for rank, idx in enumerate(ranked_indices[:6], 1):
+            project_name = cls._project_names[idx]
+            final_score = round(float(total_scores[idx]), 4)
+            match_score = round(float(weighted_match_scores[idx]), 4)
+            comp_score = round(float(weighted_comp_scores[idx]), 4)
+            
+            print(f"    {rank}. {project_name[:30]}... | 总分:{final_score} | 匹配:{match_score} | 互补:{comp_score}")
+            
             recommendations.append({
                 'rank': rank,
                 'project_id': cls._project_ids[idx],
-                'project_name': cls._project_names[idx],
-                'final_score': round(float(total_scores[idx]), 4),
+                'project_name': project_name,
+                'final_score': final_score,
+                'match_score': match_score,
+                'complementarity_score': comp_score,
             })
+        
+        print(f"  组 {group_id} 推荐计算完成，共 {len(recommendations)} 个项目")
         return recommendations
     
 # 不要有 if __name__ == '__main__' 入口和 app/app_context 相关代码

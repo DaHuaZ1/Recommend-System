@@ -4,8 +4,13 @@ from models.project import Project
 from models.group import GroupMember
 from models.group_project_recommendation import GroupProjectRecommendation
 from models.user import db
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import traceback
+
+def get_australia_time():
+    """获取澳洲东部时间（AEST/AEDT）"""
+    australia_tz = timezone(timedelta(hours=10))  # UTC+10
+    return datetime.now(australia_tz)
 
 recommend_bp = Blueprint('recommend', __name__)
 
@@ -60,6 +65,12 @@ def get_recommendations():
                   final_score:
                     type: string
                     example: "0.7956"
+                  match_score:
+                    type: string
+                    example: "0.5567"
+                  complementarity_score:
+                    type: string
+                    example: "0.2389"
                   rank:
                     type: string
                     example: "1"
@@ -108,34 +119,43 @@ def get_recommendations():
         group_id = get_user_group_id(user_id)
         if not group_id:
             return jsonify({'status': '400', 'message': '用户不属于任何小组'}), 400
-        # 3. 推荐算法
+        # 3. 推荐算法 - 为所有组计算推荐
         from recommend.service import RecommendService
         RecommendService.load_data_from_db()
-        recommendations = RecommendService.get_project_recommendations()
+        all_recommendations = RecommendService.get_project_recommendations()  # 获取所有组的推荐
 
-        # === 新增：保存推荐结果到数据库 ===
-        # 先删除该小组旧的推荐结果
-        GroupProjectRecommendation.query.filter_by(group_id=group_id).delete()
+        # === 保存所有组的推荐结果到数据库 ===
+        # 先删除所有旧的推荐结果
+        GroupProjectRecommendation.query.delete()
         db.session.commit()
-        # 批量插入新推荐
-        for rec in recommendations:
-            db.session.add(GroupProjectRecommendation(
-                group_id=group_id,
-                project_id=rec['project_id'],
-                final_score=rec['final_score'],
-                rank=rec['rank'],
-                created_at=datetime.utcnow()
-            ))
+        
+        # 批量插入所有组的新推荐
+        for group_id, recommendations in all_recommendations.items():
+            for rec in recommendations:
+                db.session.add(GroupProjectRecommendation(
+                    group_id=group_id,
+                    project_id=rec['project_id'],
+                    final_score=rec['final_score'],
+                    rank=rec['rank'],
+                    match_score=rec['match_score'],
+                    complementarity_score=rec['complementarity_score'],
+                    created_at=get_australia_time()
+                ))
         db.session.commit()
-        # === 新增结束 ===
+        # === 保存结束 ===
 
+        # 获取当前用户组的推荐结果
+        user_recommendations = all_recommendations.get(group_id, [])
+        
         projects = []
-        for rec in recommendations:
+        for rec in user_recommendations:
             project = Project.query.get(rec['project_id'])
             if project:
                 projects.append({
                     'projectNumber': project.project_number,
                     'final_score': str(rec['final_score']),
+                    'match_score': str(rec['match_score']),
+                    'complementarity_score': str(rec['complementarity_score']),
                     'rank': str(rec['rank']),
                     'projectTitle': project.project_title,
                     'clientName': project.client_name,
