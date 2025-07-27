@@ -11,10 +11,12 @@ import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
+import dayjs from 'dayjs';
+import Slide from "@mui/material/Slide";
 
 import backendURL from "../backendURL";
 
-export default function ProjectSingle({ project }) {
+export default function ProjectSingle({ project, delay = 0 }) {
   const [open, setOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -23,14 +25,16 @@ export default function ProjectSingle({ project }) {
     clientName: "",
     groupCapacity: "",
     requiredSkills: "",
-    projectRequirements: ""
+    projectRequirements: "",
+    updatetime: ""
   });
   const originalData = useMemo(() => ({
     projectTitle: project.projectTitle || "",
     clientName: project.clientName || "",
     groupCapacity: project.groupCapacity || "",
     requiredSkills: project.requiredSkills || "",
-    projectRequirements: project.projectRequirements || ""
+    projectRequirements: project.projectRequirements || "",
+    updatetime: project.updatetime || ""
   }), [project]);
 
   const isModified = useMemo(() => {
@@ -38,6 +42,8 @@ export default function ProjectSingle({ project }) {
       key => formData[key] !== originalData[key]
     );
   }, [formData, originalData]);
+
+  const isStaff = true;
 
   // Initialize form data when dialog opens
   useEffect(() => {
@@ -61,20 +67,6 @@ export default function ProjectSingle({ project }) {
   const handleReupload = () => {
     navigate('/staff/upload');
   };
-
-  // Decode JWT to check staff role
-  let isStaff = false;
-  try {
-    const token = localStorage.getItem("token");
-    if (token) {
-      const base64 = token.split(".")[1];
-      const json = atob(base64.replace(/-/g, "+").replace(/_/g, "/"));
-      const payload = JSON.parse(json);
-      isStaff = payload.role?.includes("teacher");
-    }
-  } catch (e) {
-    console.error("Token parse error:", e);
-  }
 
   const handleChange = (e) => {
     setFormData(prev => ({
@@ -151,43 +143,91 @@ export default function ProjectSingle({ project }) {
   return (
     <>
       {/* 项目卡片 */}
-      <Paper
-        elevation={3}
-        onClick={handleOpen}
-        sx={{
-          p: 3,
-          mb: 3,
-          borderRadius: 3,
-          display: "flex",
-          alignItems: "center",
-          cursor: "pointer",
-          bgcolor: "#f3f6ff",
-          transition: "background 0.2s",
-          "&:hover": { bgcolor: "#eaf0ff" }
-        }}
+      <Slide
+        direction="left"
+        in={true}
+        mountOnEnter
+        unmountOnExit
+        timeout={{ enter: 500, exit: 300 }}
+        style={{ transitionDelay: `${delay}ms` }}
       >
-        <Box sx={{ flexGrow: 1 }}>
-          <Typography variant="h6" fontWeight={700}>
-            {project.projectNumber
-              ? `Project ${project.projectNumber}`
-              : "Project"}
-          </Typography>
-          <Typography
-            color="text.secondary"
+        <Paper
+          elevation={3}
+          onClick={handleOpen}
+          sx={{
+            p: 3,
+            mb: 3,
+            borderRadius: 3,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            cursor: "pointer",
+            bgcolor: "#f3f6ff",
+            transition: "background 0.2s",
+            "&:hover": { bgcolor: "#eaf0ff" }
+          }}
+        >
+          {/* 左侧：项目信息 */}
+          <Box sx={{ flex: 1, pr: 2 }}>
+            <Typography variant="h6" fontWeight={700}>
+              {project.projectNumber
+                ? `Project ${project.projectNumber}`
+                : "Project"}
+            </Typography>
+
+            <Typography
+              color="text.secondary"
+              sx={{
+                maxWidth: "600px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+              }}
+            >
+              {project.projectTitle || "Project Title"}
+            </Typography>
+          </Box>
+
+          {/* 右侧：Top Groups */}
+          <Box
             sx={{
-              maxWidth: "600px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap"
+              width: 200,
+              ml: 'auto',
+              textAlign: 'right',
+              alignSelf: 'flex-start'
             }}
           >
-            {project.projectTitle || "Project Title"}
-          </Typography>
-        </Box>
-      </Paper>
+            <Typography
+              variant="body2"
+              fontWeight={600}
+              sx={{ mb: 0.5 }}
+            >
+              Top Groups:
+            </Typography>
+
+            {project.topGroups && project.topGroups.length > 0 ? (
+              project.topGroups
+                .slice(0, project.groupCapacity)
+                .map((group, idx) => (
+                  <Typography
+                    key={idx}
+                    variant="body2"
+                    sx={{ color: '#666' }}
+                  >
+                    {group.groupName} - {group.score}
+                  </Typography>
+                ))
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                None
+              </Typography>
+            )}
+          </Box>
+        </Paper>
+      </Slide >
 
       {/* 详情弹窗 */}
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      < Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth >
         <IconButton
           onClick={handleClose}
           sx={{ position: "absolute", right: 8, top: 8 }}
@@ -211,6 +251,14 @@ export default function ProjectSingle({ project }) {
                 {formData.projectTitle}
               </Typography>
             )}
+          </Box>
+
+          {/* Update Time */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600}>Update Time</Typography>
+            <Typography color="text.secondary">
+              {dayjs(formData.updatetime).format('YYYY-MM-DD HH:mm:ss')}
+            </Typography>
           </Box>
 
           {/* Background */}
@@ -358,10 +406,10 @@ export default function ProjectSingle({ project }) {
           )}
         </DialogActions>
 
-      </Dialog>
+      </Dialog >
 
       {/* 删除确认弹窗 */}
-      <Dialog open={deleteDialogOpen} onClose={closeDeleteDialog}>
+      < Dialog open={deleteDialogOpen} onClose={closeDeleteDialog} >
         <DialogTitle>Delete Project?</DialogTitle>
         <DialogContent>
           <Typography>Are you sure you want to delete this project?</Typography>
@@ -372,7 +420,7 @@ export default function ProjectSingle({ project }) {
             Confirm
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog >
     </>
   );
 }
