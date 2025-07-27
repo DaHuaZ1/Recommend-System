@@ -11,6 +11,7 @@ import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
+import dayjs from 'dayjs';
 
 import backendURL from "../backendURL";
 
@@ -23,14 +24,16 @@ export default function ProjectSingle({ project }) {
     clientName: "",
     groupCapacity: "",
     requiredSkills: "",
-    projectRequirements: ""
+    projectRequirements: "",
+    updatetime: ""
   });
   const originalData = useMemo(() => ({
     projectTitle: project.projectTitle || "",
     clientName: project.clientName || "",
     groupCapacity: project.groupCapacity || "",
     requiredSkills: project.requiredSkills || "",
-    projectRequirements: project.projectRequirements || ""
+    projectRequirements: project.projectRequirements || "",
+    updatetime: project.updatetime || ""
   }), [project]);
 
   const isModified = useMemo(() => {
@@ -38,6 +41,8 @@ export default function ProjectSingle({ project }) {
       key => formData[key] !== originalData[key]
     );
   }, [formData, originalData]);
+
+  const isStaff = true;
 
   // Initialize form data when dialog opens
   useEffect(() => {
@@ -61,20 +66,6 @@ export default function ProjectSingle({ project }) {
   const handleReupload = () => {
     navigate('/staff/upload');
   };
-
-  // Decode JWT to check staff role
-  let isStaff = false;
-  try {
-    const token = localStorage.getItem("token");
-    if (token) {
-      const base64 = token.split(".")[1];
-      const json = atob(base64.replace(/-/g, "+").replace(/_/g, "/"));
-      const payload = JSON.parse(json);
-      isStaff = payload.role?.includes("teacher");
-    }
-  } catch (e) {
-    console.error("Token parse error:", e);
-  }
 
   const handleChange = (e) => {
     setFormData(prev => ({
@@ -211,6 +202,14 @@ export default function ProjectSingle({ project }) {
                 {formData.projectTitle}
               </Typography>
             )}
+          </Box>
+
+          {/* Update Time */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" fontWeight={600}>Update Time</Typography>
+            <Typography color="text.secondary">
+              {dayjs(formData.updatetime).format('YYYY-MM-DD HH:mm:ss')}
+            </Typography>
           </Box>
 
           {/* Background */}
