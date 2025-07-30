@@ -124,32 +124,24 @@ def get_recommendations():
         RecommendService.load_data_from_db()
         all_recommendations = RecommendService.get_project_recommendations()  # 获取所有组的推荐
 
-        # === 保存所有组的推荐结果到数据库 ===
-        # 先删除所有旧的推荐结果
-        GroupProjectRecommendation.query.delete()
-        db.session.commit()
-        
-        # 批量插入所有组的新推荐
-        for group_id, recommendations in all_recommendations.items():
-            for rec in recommendations:
-                db.session.add(GroupProjectRecommendation(
-                    group_id=group_id,
-                    project_id=rec['project_id'],
-                    final_score=rec['final_score'],
-                    rank=rec['rank'],
-                    match_score=rec['match_score'],
-                    complementarity_score=rec['complementarity_score'],
-                    created_at=get_australia_time()
-                ))
-        db.session.commit()
-        # === 保存结束 ===
+        # === 实时更新数据库推荐分数 ===
+        RecommendService.update_recommendations_in_db(all_recommendations)
+        # === 更新完成 ===
 
         # 获取当前用户组的推荐结果
         user_recommendations = all_recommendations.get(group_id, [])
         
+        # 批量获取项目信息，减少数据库查询次数
+        project_ids = [rec['project_id'] for rec in user_recommendations]
+        projects_dict = {}
+        if project_ids:
+            projects_query = Project.query.filter(Project.id.in_(project_ids)).all()
+            projects_dict = {p.id: p for p in projects_query}
+        
         projects = []
-        for rec in user_recommendations:
-            project = Project.query.get(rec['project_id'])
+        # 修改：返回所有项目的推荐结果，按排名排序
+        for rec in sorted(user_recommendations, key=lambda x: x['rank']):
+            project = projects_dict.get(rec['project_id'])
             if project:
                 projects.append({
                     'projectNumber': project.project_number,
@@ -164,6 +156,8 @@ def get_recommendations():
                     'requiredSkills': project.required_skills,
                     'pdfFile': project.pdf_file
                 })
+        
+        print(f"返回给用户 {user_id} (组 {group_id}) 的推荐项目数量: {len(projects)}")
         return jsonify({'status': '200', 'projects': projects}), 200
     except Exception as e:
         print('推荐系统异常:', e, flush=True)

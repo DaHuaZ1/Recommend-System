@@ -14,5 +14,5 @@ class StudentResume(db.Model):
     email = db.Column(db.String(128))
     major = db.Column(db.String(128))
     skill = db.Column(db.String(256))
-    resume_file = db.Column(db.String(256))  # 新增字段，存储简历文件名或URL
+    # resume_file = db.Column(db.String(256))  # 新增字段，存储简历文件名或URL
     updated_at = db.Column(db.DateTime, default=get_australia_time, onupdate=get_australia_time) 

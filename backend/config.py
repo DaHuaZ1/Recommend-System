@@ -33,6 +33,15 @@ class Config:
     # 关闭SQLAlchemy的修改跟踪功能，提高性能
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    # 数据库连接池配置
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': 10,  # 连接池大小
+        'pool_timeout': 20,  # 连接超时时间（秒）
+        'pool_recycle': 3600,  # 连接回收时间（秒）
+        'pool_pre_ping': True,  # 连接前ping测试
+        'max_overflow': 20,  # 最大溢出连接数
+    }
+    
     # ==================== JWT配置 ====================
     # JWT签名密钥，用于生成和验证token
     # 在生产环境中必须设置一个强密钥

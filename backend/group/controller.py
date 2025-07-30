@@ -1,6 +1,9 @@
 from flask import Blueprint, request, jsonify
 from utils.jwt_utils import verify_token
 from . import service as group_service
+from models.group import Group, GroupMember
+from models.group_project_recommendation import GroupProjectRecommendation
+from models.user import db
 
 # 创建分组相关的 Blueprint
 # 所有 /student/group 路由都注册到 group_bp
@@ -21,6 +24,116 @@ def get_token_from_header():
         return token
     except ValueError:
         return None
+
+# 删除小组接口（通过小组名称，测试用，无权限校验）
+@group_bp.route('/group/<group_name>', methods=['DELETE'])
+def delete_group_by_name(group_name):
+    """
+    通过小组名称删除小组（测试用，无权限校验）
+    ---
+    tags:
+      - Group
+    parameters:
+      - name: group_name
+        in: path
+        type: string
+        required: true
+        description: 要删除的小组名称
+    responses:
+      200:
+        description: 删除成功
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: "200"
+            message:
+              type: string
+              example: "小组及相关数据已删除"
+            deleted_group:
+              type: object
+              properties:
+                group_id:
+                  type: integer
+                  example: 1
+                group_name:
+                  type: string
+                  example: "Team Alpha"
+                deleted_recommendations:
+                  type: integer
+                  example: 15
+                deleted_members:
+                  type: integer
+                  example: 3
+      404:
+        description: 小组不存在
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: "404"
+            message:
+              type: string
+              example: "小组不存在"
+      500:
+        description: 服务器错误
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: "500"
+            message:
+              type: string
+              example: "服务器错误"
+    """
+    try:
+        # 1. 通过小组名称查找group
+        group = Group.query.filter_by(group_name=group_name).first()
+        if not group:
+            return jsonify({
+                'status': '404', 
+                'message': f'小组 "{group_name}" 不存在'
+            }), 404
+
+        group_id = group.id
+        
+        # 2. 获取删除前的统计信息
+        deleted_recommendations = GroupProjectRecommendation.query.filter_by(group_id=group_id).count()
+        deleted_members = GroupMember.query.filter_by(group_id=group_id).count()
+
+        # 3. 删除推荐记录
+        GroupProjectRecommendation.query.filter_by(group_id=group_id).delete()
+        
+        # 4. 删除组员记录
+        GroupMember.query.filter_by(group_id=group_id).delete()
+        
+        # 5. 删除小组
+        db.session.delete(group)
+        
+        # 6. 提交所有更改
+        db.session.commit()
+        
+        return jsonify({
+            'status': '200',
+            'message': '小组及相关数据已删除',
+            'deleted_group': {
+                'group_id': group_id,
+                'group_name': group_name,
+                'deleted_recommendations': deleted_recommendations,
+                'deleted_members': deleted_members
+            }
+        }), 200
+        
+    except Exception as e:
+        # 回滚事务
+        db.session.rollback()
+        return jsonify({
+            'status': '500',
+            'message': f'服务器错误: {str(e)}'
+        }), 500
 
 # 创建分组接口
 # POST /api/student/group

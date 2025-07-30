@@ -45,7 +45,19 @@ def create_app():
     # 在应用上下文中创建数据库表
     # 如果表不存在，会自动创建
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+            print("数据库表创建成功！")
+        except Exception as e:
+            print(f"数据库初始化失败: {e}")
+            # 可以在这里添加重试逻辑
+            import time
+            time.sleep(5)  # 等待5秒后重试
+            try:
+                db.create_all()
+                print("数据库表重试创建成功！")
+            except Exception as e2:
+                print(f"数据库重试初始化失败: {e2}")
 
     return app
 
