@@ -68,6 +68,8 @@ export default function GroupStd() {
           groupMembers: data.groupMembers,
         });
         setCurrentLocation(1);
+      } else {
+        localStorage.setItem('Grouped', 'false');
       }
     } catch (err) {
       console.error(err);
@@ -136,10 +138,34 @@ export default function GroupStd() {
       if (!res.ok) throw new Error(`Server responded ${res.status}`);
       setSnackbar({ open: true, msg: 'Group created successfully!', severity: 'success' });
       handleCloseAll();
+      setCurrentLocation(1);
       await fetchmyGroup();  // Refresh group list
     } catch (err) {
       console.error(err);
       setSnackbar({ open: true, msg: 'Failed to create group. Please try again later.', severity: 'error' });
+      setOpenConfirm(false);
+    }
+  };
+
+  // 删除组的处理函数
+  const handleDeleteGroup = async () => {
+    try {
+      const res = await fetch(`${backendURL}/api/group/${myGroup.groupName}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ groupName: myGroup.groupName }),
+      });
+      if (!res.ok) throw new Error(`Server responded ${res.status}`);
+      setSnackbar({ open: true, msg: 'Group deleted successfully!', severity: 'success' });
+      handleCloseAll();
+      setCurrentLocation(0);
+      await fetchmyGroup();  // Refresh group list
+    } catch (err) {
+      console.error(err);
+      setSnackbar({ open: true, msg: 'Failed to delete group. Please try again later.', severity: 'error' });
       setOpenConfirm(false);
     }
   };
@@ -253,9 +279,31 @@ export default function GroupStd() {
             }}
           >
             <GroupsIcon sx={{ fontSize: 50, color: 'primary.main', mb: 1 }} />
-            <Typography variant="h4" fontWeight={700} mb={1}>
-              {myGroup.groupName || 'My Group'}
-            </Typography>
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              position="relative"         /* ➞ 设为 relative，才能让子元素绝对定位 */
+            >
+              <Typography
+                variant="h4"
+                fontWeight={700}
+                mb={1}
+              >
+                {myGroup.groupName || 'My Group'}
+              </Typography>
+
+              <Button
+                color="error"
+                onClick={handleDeleteGroup}
+                sx={{
+                  position: 'absolute',    /* ➞ 绝对定位 */
+                  right: 0,                /* ➞ 紧贴容器右侧 */
+                }}
+              >
+                Delete
+              </Button>
+            </Box>
             <Typography variant="body1" color="text.secondary" mb={3}>
               You are now part of a project group. Here's your team:
             </Typography>
