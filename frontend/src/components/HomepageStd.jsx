@@ -56,6 +56,7 @@ const HomeStd = () => {
       });
       setProjects(all);
       setFilteredProjects(all); // 初始化时显示所有项目
+      localStorage.setItem('projects', JSON.stringify(all));
     } catch (error) {
       console.error('Error fetching projects:', error);
     } 
@@ -70,6 +71,43 @@ const HomeStd = () => {
     }
     fetchProjects();
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 定时轮询获取项目列表
+  useEffect(() => {
+    const intervalId = setInterval(async () => {
+      try {
+        const res = await fetch(`${backendURL}/api/student/projects`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+        if (!res.ok) throw new Error('Network response was not ok');
+        const data = await res.json();
+        const newProjects = (data.projects || []).sort(
+          (a, b) => parseInt(a.projectNumber) - parseInt(b.projectNumber)
+        );
+        const oldProjects = JSON.parse(localStorage.getItem('projects') || '[]');
+        const hasChange = newProjects.some((np) => {
+          const old = oldProjects.find(
+            (op) => op.projectNumber === np.projectNumber
+          );
+          return !old || np.updatetime !== old.updatetime;
+        });
+        if (hasChange) {
+          setProjects(newProjects);
+          setFilteredProjects(newProjects);
+          localStorage.setItem('projects', JSON.stringify(newProjects));
+          console.log('changed!!!!!!!!!!!!!');
+        }
+      } catch (error) {
+        console.error('Error polling projects:', error);
+      }
+    }, 5000);
+    return () => clearInterval(intervalId);
   }, []);
 
   // 监听页面滚动
