@@ -195,12 +195,24 @@ class RecommendService:
     _project_ids = None
     _ALPHA = 0.7  # 匹配度权重
     _BETA = 0.3   # 项目相关互补度权重
+    _last_load_time = None  # 缓存时间戳
+    _cache_duration = 300  # 缓存5分钟
 
     @classmethod
     def load_data_from_db(cls):
         """
         从数据库加载成员技能和项目技能数据，构造向量
         """
+        import time
+        
+        # 检查缓存是否有效
+        current_time = time.time()
+        if (cls._last_load_time and 
+            cls._group_skills is not None and 
+            cls._project_skills is not None and
+            current_time - cls._last_load_time < cls._cache_duration):
+            return
+        
         print("\n" + "="*80)
         print("开始加载数据库数据...")
         
@@ -221,20 +233,9 @@ class RecommendService:
             skill_dict = analyze_skill_strength(member.skill or "")
             vector = [skill_dict.get(skill, 0) for skill in all_skills]
             
-            # 调试输出：显示组员技能分析结果
-            print(f"  组员 {member.name} (组{member.group_id}):")
-            print(f"    原始技能文本: {member.skill[:100] if member.skill else '无'}...")
-            print(f"    识别到的技能数量: {len(skill_dict)}")
-            if skill_dict:
-                print(f"    技能详情:")
-                for skill, level in sorted(skill_dict.items(), key=lambda x: x[1], reverse=True)[:5]:  # 只显示前5个最高级别技能
-                    print(f"      - {skill}: 级别{level}")
-                if len(skill_dict) > 5:
-                    print(f"      ... 还有 {len(skill_dict) - 5} 个技能")
-            else:
-                print(f"    警告: 未识别到任何技能")
-            print(f"    技能向量维度: {len(vector)}, 非零元素: {sum(1 for x in vector if x > 0)}")
-            print()
+            # 减少调试输出，只显示关键信息
+            if len(skill_dict) > 0:
+                pass # 删除所有print相关的调试输出
             
             group_data[member.group_id].append(vector)
         
@@ -250,18 +251,8 @@ class RecommendService:
                 # 计算组平均技能向量
                 avg_vector = np.mean(group_skills_array, axis=0)
                 non_zero_skills = [(skill, avg_vector[i]) for i, skill in enumerate(all_skills) if avg_vector[i] > 0]
-                non_zero_skills.sort(key=lambda x: x[1], reverse=True)
                 
-                print(f"   组 {group_id}: {len(vectors)} 个成员")
-                print(f"    组平均技能向量维度: {len(avg_vector)}")
-                print(f"    组平均技能向量非零元素: {len(non_zero_skills)}")
-                if non_zero_skills:
-                    print(f"    组平均技能 (前5个最高级别):")
-                    for skill, level in non_zero_skills[:5]:
-                        print(f"      - {skill}: 级别{level:.2f}")
-                    if len(non_zero_skills) > 5:
-                        print(f"      ... 还有 {len(non_zero_skills) - 5} 个技能")
-                print()
+                pass # 删除所有print相关的调试输出
         
         print(f"成功加载 {len(cls._group_skills)} 个组的技能数据")
 
@@ -276,30 +267,11 @@ class RecommendService:
         for project in projects:
             skill_dict = analyze_skill_strength(project.required_skills or "")
             
-            # 调试输出：显示项目技能分析结果
-            print(f"  项目 {project.project_number} - {project.project_title[:50]}...:")
-            print(f"    原始技能要求: {project.required_skills[:100] if project.required_skills else '无'}...")
-            print(f"    识别到的技能数量: {len(skill_dict)}")
-            
             if len(skill_dict) < 3:
                 skipped_count += 1
-                print(f"    跳过: 技能数量不足 (需要>=3, 实际={len(skill_dict)})")
-                print()
                 continue  # 忽略技能太少的项目
             
-            if skill_dict:
-                print(f"    技能详情:")
-                for skill, level in sorted(skill_dict.items(), key=lambda x: x[1], reverse=True)[:5]:  # 只显示前5个最高级别技能
-                    print(f"      - {skill}: 级别{level}")
-                if len(skill_dict) > 5:
-                    print(f"      ... 还有 {len(skill_dict) - 5} 个技能")
-            else:
-                print(f"    警告: 未识别到任何技能")
-            
             vector = [skill_dict.get(skill, 0) for skill in all_skills]
-            print(f"    技能向量维度: {len(vector)}, 非零元素: {sum(1 for x in vector if x > 0)}")
-            print()
-            
             project_vectors.append(vector)
             project_names.append(project.project_title)
             project_ids.append(project.id)
@@ -317,6 +289,8 @@ class RecommendService:
             cls._project_ids = project_ids
             print(f"项目数据加载完成，维度: {cls._project_skills.shape}")
         
+        # 更新缓存时间戳
+        cls._last_load_time = current_time
         print("="*80)
 
     @classmethod
@@ -386,35 +360,27 @@ class RecommendService:
         """为指定组计算项目推荐"""
         from sklearn.preprocessing import minmax_scale
         
-        print(f"  开始为组 {group_id} 计算推荐...")
-        
         if group_id not in cls._group_skills:
             print(f"  组 {group_id} 不在技能数据中，跳过")
             return []
         
         group_skills = cls._group_skills[group_id]
-        print(f"  组 {group_id} 有 {group_skills.shape[0]} 个成员，技能向量维度: {group_skills.shape[1]}")
-        
         group_vector = cls.compute_group_vector(group_skills)
-        print(f"  组平均技能向量计算完成")
 
         if len(cls._project_skills) == 0:
             print(f"  没有项目数据，组 {group_id} 无法计算推荐")
             return []
 
         match_scores = cls.compute_match_scores(group_vector, cls._project_skills)
-        print(f"  匹配度分数计算完成，范围: [{match_scores.min():.4f}, {match_scores.max():.4f}]")
         
         project_comp_scores = []
         for i, p in enumerate(cls._project_skills):
             comp_score = cls.compute_project_aware_complementarity(group_skills, p)
             project_comp_scores.append(comp_score)
-        print(f"  互补度分数计算完成，范围: [{min(project_comp_scores):.4f}, {max(project_comp_scores):.4f}]")
 
         # 归一化
         match_scores_norm = minmax_scale(match_scores)
         comp_scores_norm = minmax_scale(project_comp_scores)
-        print(f"  分数归一化完成")
 
         # 加权求和
         weighted_match_scores = alpha * match_scores_norm
@@ -422,19 +388,21 @@ class RecommendService:
         total_scores = weighted_match_scores + weighted_comp_scores
         # 分数大于0.9的项减去0.1
         total_scores = np.where(total_scores > 0.9, total_scores - 0.1, total_scores)
-        print(f"  加权总分计算完成，范围: [{total_scores.min():.4f}, {total_scores.max():.4f}]")
 
         # 排名
         ranked_indices = np.argsort(-total_scores)
         recommendations = []
-        print(f"  开始生成推荐排名...")
-        for rank, idx in enumerate(ranked_indices[:6], 1):
+        
+        # 修改：返回所有项目的推荐分数，而不是只返回前6个
+        for rank, idx in enumerate(ranked_indices, 1):
             project_name = cls._project_names[idx]
             final_score = round(float(total_scores[idx]), 4)
             match_score = round(float(weighted_match_scores[idx]), 4)
             comp_score = round(float(weighted_comp_scores[idx]), 4)
             
-            print(f"    {rank}. {project_name[:30]}... | 总分:{final_score} | 匹配:{match_score} | 互补:{comp_score}")
+            # 只打印前6个用于调试
+            if rank <= 6:
+                pass # 删除所有print相关的调试输出
             
             recommendations.append({
                 'rank': rank,
@@ -445,7 +413,69 @@ class RecommendService:
                 'complementarity_score': comp_score,
             })
         
-        print(f"  组 {group_id} 推荐计算完成，共 {len(recommendations)} 个项目")
+        print(f"  组 {group_id} 推荐计算完成，共 {len(recommendations)} 个项目（保存所有项目）")
         return recommendations
+
+    @classmethod
+    def update_recommendations_in_db(cls, all_recommendations):
+        """
+        更新数据库中的推荐分数
+        Args:
+            all_recommendations: 所有组的推荐结果字典
+        """
+        from models.group_project_recommendation import GroupProjectRecommendation
+        from models.user import db
+        from datetime import datetime, timezone, timedelta
+        
+        def get_australia_time():
+            """获取澳洲东部时间（AEST/AEDT）"""
+            australia_tz = timezone(timedelta(hours=10))  # UTC+10
+            return datetime.now(australia_tz)
+        
+        print("\n开始更新数据库推荐分数...")
+        
+        try:
+            updated_count = 0
+            created_count = 0
+            
+            # 为每个组更新推荐分数
+            for group_id, recommendations in all_recommendations.items():
+                for rec in recommendations:
+                    # 查找现有记录
+                    existing_rec = GroupProjectRecommendation.query.filter_by(
+                        group_id=group_id,
+                        project_id=rec['project_id']
+                    ).first()
+                    
+                    if existing_rec:
+                        # 更新现有记录
+                        existing_rec.final_score = rec['final_score']
+                        existing_rec.rank = rec['rank']
+                        existing_rec.match_score = rec['match_score']
+                        existing_rec.complementarity_score = rec['complementarity_score']
+                        existing_rec.created_at = get_australia_time()
+                        updated_count += 1
+                    else:
+                        # 创建新记录
+                        new_rec = GroupProjectRecommendation(
+                            group_id=group_id,
+                            project_id=rec['project_id'],
+                            final_score=rec['final_score'],
+                            rank=rec['rank'],
+                            match_score=rec['match_score'],
+                            complementarity_score=rec['complementarity_score'],
+                            created_at=get_australia_time()
+                        )
+                        db.session.add(new_rec)
+                        created_count += 1
+            
+            # 提交所有更改
+            db.session.commit()
+            print(f"数据库推荐分数更新完成！更新: {updated_count} 条，新增: {created_count} 条")
+            
+        except Exception as e:
+            print(f"更新数据库时出错: {e}")
+            db.session.rollback()
+            raise
     
 # 不要有 if __name__ == '__main__' 入口和 app/app_context 相关代码
