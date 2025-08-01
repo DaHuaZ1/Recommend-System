@@ -181,7 +181,7 @@ export default function GroupStf() {
                                             </Typography>
                                             {group.recommendProjects && group.recommendProjects.length > 0 ? (
                                                 <Stack spacing={1} alignItems="flex-start" justifyContent="flex-start">
-                                                    {group.recommendProjects.map((p) => (
+                                                    {group.recommendProjects.slice(0, 6).map((p) => (
                                                         <Typography key={p.projectNumber} variant="body2">
                                                             {p.rank}.{' '}
                                                             <Box
