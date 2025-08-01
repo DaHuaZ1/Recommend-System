@@ -1,2 +1,2 @@
-const backendURL = 'https://04d10a841a0a.ngrok-free.app/';
+const backendURL = 'http://localhost:5000';
 export default backendURL;

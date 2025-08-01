@@ -46,5 +46,15 @@ services:
       sh -c "python init_db.py &&
              python app.py"
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cake-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
 volumes:
   mysql_data: 
