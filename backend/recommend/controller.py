@@ -139,8 +139,8 @@ def get_recommendations():
             projects_dict = {p.id: p for p in projects_query}
         
         projects = []
-        # 修改：返回所有项目的推荐结果，按排名排序
-        for rec in sorted(user_recommendations, key=lambda x: x['rank']):
+        # 修改：只返回前6个推荐项目
+        for rec in sorted(user_recommendations, key=lambda x: x['rank'])[:6]:
             project = projects_dict.get(rec['project_id'])
             if project:
                 projects.append({
