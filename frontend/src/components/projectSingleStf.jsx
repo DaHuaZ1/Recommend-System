@@ -64,6 +64,9 @@ export default function ProjectSingle({ project, delay = 0 }) {
       window.open(backendURL + project.pdfFile, "_blank");
     }
   };
+
+  const navigate = useNavigate();
+  
   const handleReupload = () => {
     navigate('/staff/upload');
   };
