@@ -168,6 +168,7 @@ export default function UploadStd() {
 
   /* ---------- 确认保存函数 ---------- */
   const handleDialogConfirm = async () => {
+    localStorage.setItem("Resume", "true");
     setSaving(true);
     try {
       // 1. 发送到后端
