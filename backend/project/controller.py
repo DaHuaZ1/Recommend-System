@@ -36,7 +36,7 @@ def convert_to_local_time(time_obj):
 @project_bp.route('/staff/projects', methods=['POST'])
 def upload_staff_projects():
     """
-    批量上传项目PDF，自动提取项目信息但不存库，只返回解析结果
+    批量上传项目PDF，自动提取项目信息并存库，返回解析结果
     ---
     tags:
       - 项目
@@ -100,15 +100,17 @@ def upload_staff_projects():
         return jsonify({'error': '未选择文件'}), 400
     upload_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../staff_project'))
     projects = []
+    from . import service as project_service
     for file in files:
         filename = file.filename
         file_path = os.path.join(upload_dir, filename)
         file.save(file_path)
         from utils.project_utils import parse_project_pdf
         info = parse_project_pdf(file_path, filename)
-        # 增加pdfFile字段，返回API路径
         api_path = f"/api/files/project/{filename}"
         info['pdfFile'] = api_path
+        # 新增：保存到数据库（会自动存base64）
+        project_service.save_project_to_db(info, api_path)
         projects.append(info)
     return jsonify({'status': '200', 'projects': projects})
 

@@ -80,3 +80,9 @@ def get_project_by_number(project_number):
     根据 project_number 查询单个项目
     """
     return project_dao.get_project_by_number(project_number) 
+
+def save_project_to_db(info, pdf_file_path):
+    """
+    单个项目保存，供controller直接调用
+    """
+    return project_dao.save_project_to_db(info, pdf_file_path) 

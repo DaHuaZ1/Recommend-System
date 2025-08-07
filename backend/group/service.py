@@ -42,15 +42,50 @@ def get_user_group_info(user_id):
     } 
 
 def get_all_groups_with_members_and_recommendations():
+    """
+    优化版：批量查询所有小组、组员、简历、推荐项目和项目详情，避免N+1查询，极大提升性能。
+    返回结构与原来完全一致。
+    """
     from . import dao as group_dao
     from models.project import Project
-    groups = group_dao.get_all_groups()
+    from models.group import Group, GroupMember
+    from models.student_resume import StudentResume
+    from models.group_project_recommendation import GroupProjectRecommendation
+
+    # 1. 批量查所有小组
+    groups = Group.query.all()
+    group_ids = [g.id for g in groups]
+
+    # 2. 批量查所有组员
+    all_members = GroupMember.query.filter(GroupMember.group_id.in_(group_ids)).all() if group_ids else []
+    members_by_group = {}
+    user_ids = set()
+    for m in all_members:
+        members_by_group.setdefault(m.group_id, []).append(m)
+        user_ids.add(m.user_id)
+
+    # 3. 批量查所有简历
+    resumes = StudentResume.query.filter(StudentResume.user_id.in_(user_ids)).all() if user_ids else []
+    resume_map = {r.user_id: r for r in resumes}
+
+    # 4. 批量查所有推荐项目
+    all_recs = GroupProjectRecommendation.query.filter(GroupProjectRecommendation.group_id.in_(group_ids)).order_by(GroupProjectRecommendation.rank).all() if group_ids else []
+    recs_by_group = {}
+    project_ids = set()
+    for rec in all_recs:
+        recs_by_group.setdefault(rec.group_id, []).append(rec)
+        project_ids.add(rec.project_id)
+
+    # 5. 批量查所有项目详情
+    projects = Project.query.filter(Project.id.in_(project_ids)).all() if project_ids else []
+    project_map = {p.id: p for p in projects}
+
+    # 6. 组装返回数据
     result = []
     for group in groups:
-        members = group_dao.get_group_members(group.id)
         member_list = []
-        for m in members:
-            resume = group_dao.get_resume_by_user_id(m.user_id)
+        for m in members_by_group.get(group.id, []):
+            resume = resume_map.get(m.user_id)
             member_list.append({
                 'name': m.name,
                 'skill': m.skill or (resume.skill if resume else ''),
@@ -58,10 +93,9 @@ def get_all_groups_with_members_and_recommendations():
                 'major': resume.major if resume else '',
                 'resume': resume.id if resume else ''
             })
-        recs = group_dao.get_group_recommendations(group.id)
         rec_projects = []
-        for rec in recs:
-            project = Project.query.get(rec.project_id)
+        for rec in recs_by_group.get(group.id, []):
+            project = project_map.get(rec.project_id)
             if not project:
                 continue
             rec_projects.append({

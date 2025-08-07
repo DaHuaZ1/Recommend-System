@@ -1,6 +1,6 @@
 from models.user import db
 from datetime import datetime, timezone, timedelta
-
+from sqlalchemy.dialects.mysql import LONGTEXT
 def get_australia_time():
     """获取澳洲东部时间（AEST/AEDT）"""
     australia_tz = timezone(timedelta(hours=10))  # UTC+10
@@ -16,4 +16,5 @@ class Project(db.Model):
     project_requirements = db.Column(db.Text, nullable=False)
     required_skills = db.Column(db.Text, nullable=False)
     pdf_file = db.Column(db.String(1024), nullable=True)
+    pdf_base64 = db.Column(LONGTEXT, nullable=True)  # 使用MySQL的LONGTEXT类型，支持大文件base64
     updated_at = db.Column(db.DateTime, default=get_australia_time, onupdate=get_australia_time)    

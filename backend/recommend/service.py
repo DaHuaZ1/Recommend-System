@@ -196,7 +196,7 @@ class RecommendService:
     _ALPHA = 0.7  # 匹配度权重
     _BETA = 0.3   # 项目相关互补度权重
     _last_load_time = None  # 缓存时间戳
-    _cache_duration = 300  # 缓存5分钟
+    _cache_duration = 1800  # 缓存30分钟（原来是300秒=5分钟）
 
     @classmethod
     def load_data_from_db(cls):

@@ -119,27 +119,32 @@ def get_recommendations():
         group_id = get_user_group_id(user_id)
         if not group_id:
             return jsonify({'status': '400', 'message': '用户不属于任何小组'}), 400
-        # 3. 推荐算法 - 为所有组计算推荐
+        
+        # 3. 推荐算法 - 只计算当前组的推荐
         from recommend.service import RecommendService
         RecommendService.load_data_from_db()
-        all_recommendations = RecommendService.get_project_recommendations()  # 获取所有组的推荐
-
-        # === 实时更新数据库推荐分数 ===
-        RecommendService.update_recommendations_in_db(all_recommendations)
-        # === 更新完成 ===
-
-        # 获取当前用户组的推荐结果
-        user_recommendations = all_recommendations.get(group_id, [])
         
-        # 批量获取项目信息，减少数据库查询次数
+        # 只计算当前用户组的推荐，不计算所有组
+        user_recommendations = RecommendService._get_recommendations_for_group(
+            group_id, 
+            RecommendService._ALPHA, 
+            RecommendService._BETA
+        )
+        
+        # 4. 可选：异步更新数据库（不阻塞响应）
+        # 这里先注释掉，避免每次请求都更新数据库
+        # RecommendService.update_recommendations_in_db({group_id: user_recommendations})
+        
+        # 5. 批量获取项目信息
         project_ids = [rec['project_id'] for rec in user_recommendations]
         projects_dict = {}
         if project_ids:
+            from models.project import Project
             projects_query = Project.query.filter(Project.id.in_(project_ids)).all()
             projects_dict = {p.id: p for p in projects_query}
         
         projects = []
-        # 修改：返回所有项目的推荐结果，按排名排序
+        # 返回推荐结果，按排名排序
         for rec in sorted(user_recommendations, key=lambda x: x['rank']):
             project = projects_dict.get(rec['project_id'])
             if project:
@@ -160,6 +165,7 @@ def get_recommendations():
         print(f"返回给用户 {user_id} (组 {group_id}) 的推荐项目数量: {len(projects)}")
         return jsonify({'status': '200', 'projects': projects}), 200
     except Exception as e:
+        import traceback
         print('推荐系统异常:', e, flush=True)
         print(traceback.format_exc(), flush=True)
         return jsonify({'status': '500', 'message': f'推荐系统出现错误: {str(e)}'}), 500

@@ -58,30 +58,55 @@ def get_pdf_base64(pdf_file_path):
 
 # 项目相关数据库操作（目前为模拟数据，后续可接数据库）
 def get_all_projects():
-    # 从数据库查询所有项目
+    # 1. 一次性查出所有项目
     projects = Project.query.all()
-    result = []
+    if not projects:
+        return []
+    
+    project_ids = [p.id for p in projects]
+    
+    # 2. 批量查出所有推荐分数
     from models.group_project_recommendation import GroupProjectRecommendation
     from models.group import Group
+    
+    all_recs = GroupProjectRecommendation.query.filter(
+        GroupProjectRecommendation.project_id.in_(project_ids)
+    ).all()
+    
+    # 3. 批量查出所有组
+    group_ids = list(set([rec.group_id for rec in all_recs]))
+    groups = {}
+    if group_ids:
+        groups = {g.id: g for g in Group.query.filter(Group.id.in_(group_ids)).all()}
+    
+    # 4. 按项目分组推荐数据
+    recs_by_project = {}
+    for rec in all_recs:
+        if rec.project_id not in recs_by_project:
+            recs_by_project[rec.project_id] = []
+        recs_by_project[rec.project_id].append(rec)
+    
+    # 5. 组装结果
+    result = []
     for p in projects:
-        # 查询该项目推荐分数前N的组，N为group_capacity
+        project_recs = recs_by_project.get(p.id, [])
+        
+        # 按分数排序取前N个
         try:
             group_capacity = int(p.group_capacity)
         except (ValueError, TypeError):
-            group_capacity = 3  # 默认3
-        recs = GroupProjectRecommendation.query.filter_by(project_id=p.id).order_by(GroupProjectRecommendation.final_score.desc()).limit(group_capacity).all()
+            group_capacity = 3
+        
+        top_recs = sorted(project_recs, key=lambda x: x.final_score, reverse=True)[:group_capacity]
+        
         top_groups = []
-        for rec in recs:
-            group = Group.query.get(rec.group_id)
+        for rec in top_recs:
+            group = groups.get(rec.group_id)
             top_groups.append({
                 'groupName': group.group_name if group else None,
                 'score': rec.final_score
             })
-        # 获取该项目的三个分数（取最高分的记录）
-        top_rec = GroupProjectRecommendation.query.filter_by(project_id=p.id).order_by(GroupProjectRecommendation.final_score.desc()).first()
         
-        # 获取PDF二进制数据
-        pdf_base64 = get_pdf_base64(p.pdf_file)
         result.append({
             "projectNumber": p.project_number,
             "projectTitle": p.project_title,
@@ -90,16 +115,16 @@ def get_all_projects():
             "projectRequirements": p.project_requirements,
             "requiredSkills": p.required_skills,
             "pdfFile": p.pdf_file,
-            "pdf": pdf_base64,  # 新增：PDF二进制数据（base64编码）
+            "pdf": p.pdf_base64,  # 直接从数据库取
             "updatetime": convert_to_local_time(p.updated_at),
             "topGroups": top_groups,
-            "final_score": str(top_rec.final_score) if top_rec and top_rec.final_score else None,
-            "match_score": None,  # 暂时设为None，等数据库字段添加后再启用
-            "complementarity_score": None  # 暂时设为None，等数据库字段添加后再启用
+            "final_score": str(top_recs[0].final_score) if top_recs else None,
+            "match_score": None,
+            "complementarity_score": None
         })
     return result
 
-def save_project_to_db(project_info, pdf_file):
+def save_project_to_db(project_info, pdf_file_path):
     """
     保存单个项目到数据库。如果 project_number 已存在则更新，否则插入新项目。
     Args:
@@ -108,6 +133,22 @@ def save_project_to_db(project_info, pdf_file):
     Returns:
         Project 实例
     """
+    pdf_base64 = None
+    if pdf_file_path:
+        try:
+            # 兼容API路径和文件名
+            if pdf_file_path.startswith('/api/files/project/'):
+                filename = pdf_file_path.replace('/api/files/project/', '')
+            else:
+                filename = pdf_file_path
+            staff_project_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../staff_project'))
+            full_path = os.path.join(staff_project_dir, filename)
+            if os.path.exists(full_path):
+                with open(full_path, 'rb') as f:
+                    pdf_base64 = base64.b64encode(f.read()).decode('utf-8')
+        except Exception as e:
+            print(f"读取PDF转base64失败: {e}")
+
     project = Project.query.filter_by(project_number=project_info['projectNumber']).first()
     if project:
         # 已存在，执行更新
@@ -116,7 +157,9 @@ def save_project_to_db(project_info, pdf_file):
         project.group_capacity = project_info['groupCapacity']
         project.project_requirements = project_info['projectRequirements']
         project.required_skills = project_info['requiredSkills']
-        project.pdf_file = pdf_file
+        project.pdf_file = pdf_file_path
+        if pdf_base64:
+            project.pdf_base64 = pdf_base64
     else:
         # 不存在，插入新项目
         project = Project(
@@ -126,10 +169,11 @@ def save_project_to_db(project_info, pdf_file):
             group_capacity=project_info['groupCapacity'],
             project_requirements=project_info['projectRequirements'],
             required_skills=project_info['requiredSkills'],
-            pdf_file=pdf_file
+            pdf_file=pdf_file_path,
+            pdf_base64=pdf_base64
         )
         db.session.add(project)
-        db.session.commit()
+    db.session.commit()
     return project 
 
 def upsert_project_by_number(info):
