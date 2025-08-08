@@ -197,7 +197,8 @@ export default function ProjectSingle({ project, delay = 0 }) {
               width: 200,
               ml: 'auto',
               textAlign: 'right',
-              alignSelf: 'flex-start'
+              alignSelf: 'flex-start',
+              height: '73px',
             }}
           >
             <Typography
@@ -209,17 +210,47 @@ export default function ProjectSingle({ project, delay = 0 }) {
             </Typography>
 
             {project.topGroups && project.topGroups.length > 0 ? (
-              project.topGroups
-                .slice(0, project.groupCapacity)
-                .map((group, idx) => (
+              <Box
+                sx={{
+                  // 每行大概 24px 行高，2 行 ≈ 48；给点余量设 60
+                  maxHeight: project.topGroups.length > 2 ? 50 : 'none',
+                  overflowY: project.topGroups.length > 2 ? 'auto' : 'visible',
+                  pr: 0.5, // 给滚动条留点空间
+                  // 默认窄滚动条 & 几乎透明
+                  scrollbarWidth: 'thin', // Firefox
+                  scrollbarColor: 'transparent transparent', // 默认透明
+
+                  '&::-webkit-scrollbar': {
+                    width: '6px', // 滚动条宽度
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: 'transparent', // 默认透明
+                    borderRadius: '3px',
+                    transition: 'background-color 0.3s',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    backgroundColor: 'transparent',
+                  },
+
+                  // 鼠标悬停时滚动条显现
+                  '&:hover': {
+                    scrollbarColor: '#bbb transparent', // Firefox
+                    '&::-webkit-scrollbar-thumb': {
+                      backgroundColor: '#bbb', // 悬停时颜色
+                    },
+                  },
+                }}
+              >
+                {project.topGroups.map((group, idx) => (
                   <Typography
                     key={idx}
                     variant="body2"
-                    sx={{ color: '#666' }}
+                    sx={{ color: '#666', lineHeight: '20px', whiteSpace: 'nowrap' }}
                   >
-                    {group.groupName} - {group.score}
+                    {group.groupName} - {(group.score * 100).toFixed(2)}%
                   </Typography>
-                ))
+                ))}
+              </Box>
             ) : (
               <Typography variant="body2" color="text.secondary">
                 None

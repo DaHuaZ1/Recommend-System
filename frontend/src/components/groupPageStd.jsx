@@ -386,6 +386,7 @@ export default function GroupStd() {
               fullWidth
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
+              inputProps={{ maxLength: 5 }}
             />
             <Stack direction="row" spacing={2}>
               <TextField

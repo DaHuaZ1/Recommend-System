@@ -93,7 +93,7 @@ export default function ProjectSingle({ project, delay = 0 }) {
           {/* 仅在 /student/group/recommend 页面显示进度环 */}
           {pathname === "/student/group/recommend" && (
             <Tooltip
-              title={`The final score is derived from complementarity score ${project.complementarity_score * 100}% + match scores ${project.match_score * 100}%.`}
+              title={`The final score is derived from complementarity score ${(project.complementarity_score * 100).toFixed(2)}% + match scores ${(project.match_score * 100).toFixed(2)}%.`}
               placement="top"
             >
               <Box sx={{ position: "relative", width: 60, height: 60, mr: 2.5, flexShrink: 0 }}>
