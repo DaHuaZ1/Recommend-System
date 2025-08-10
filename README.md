@@ -59,7 +59,7 @@ A comprehensive project recommendation system built with Flask and React, design
 1. **Clone the Repository**
 ```bash
 git clone <repository-url>
-cd capstone-project-25t2-9900-w16a-cake
+cd Recommend-System
 ```
 
 2. **Start Services**
@@ -94,7 +94,7 @@ npm run dev
 ## 📁 Project Structure
 
 ```
-capstone-project-25t2-9900-w16a-cake/
+Recommend-System/
 ├── backend/                 # Flask Backend
 │   ├── app.py              # Main application entry point
 │   ├── config.py           # Configuration settings
@@ -279,7 +279,7 @@ We welcome contributions! Please follow these steps:
 
 ## 📝 Development Team
 
-- **Project**: Capstone Project 25T2-9900-W16A-CAKE
+- **Project**: Recommend System
 - **Team**: W16A
 - **Institution**: Academic Capstone Project
 - **Technology**: Flask + React + MySQL
